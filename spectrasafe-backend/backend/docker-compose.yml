@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: spectrasafe
+      POSTGRES_PASSWORD: spectrasafe
+      POSTGRES_DB: spectrasafe
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spectrasafe"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://spectrasafe:spectrasafe@db:5432/spectrasafe
+      YOLO_WEIGHTS_PATH: /app/models/best.pt
+      INGREDIENT_DICT_PATH: /app/data/ingredients.txt
+      GROUND_TRUTH_PATH: /app/data/ground_truth.json
+      INS_INDEX_PATH: /app/data/index.csv
+      CANADA_STATUS_PATH: /app/data/canada_status.json
+      UK_DIVERGENCES_PATH: /app/data/uk_divergences.json
+      BANNED_TERMS_PATH: /app/data/banned_terms.json
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in your shell or a .env file before running compose}
+    volumes:
+      # Mount your weights/data from the host instead of baking them into
+      # the image — keeps the image small and lets you swap files without
+      # rebuilding.
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

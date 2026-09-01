@@ -1,0 +1,32 @@
+{
+  "tobacco": {
+    "status": "prohibited",
+    "note": "Tobacco shall not be used as an ingredient in any food product.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.3.4"
+  },
+  "nicotine": {
+    "status": "prohibited",
+    "note": "Nicotine shall not be used as an ingredient in any food product.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.3.4"
+  },
+  "kesari": {
+    "status": "restricted",
+    "note": "Kesari gram/dal (Lathyrus sativus) and its products/mixtures are restricted; incidental occurrence in grams/pulses capped at 2%.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.2.1, 2.2.2"
+  },
+  "lathyrus": {
+    "status": "restricted",
+    "note": "Lathyrus sativus (kesari) and its products/mixtures are restricted; incidental occurrence in grams/pulses capped at 2%.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.2.1, 2.2.2"
+  },
+  "mineral oil": {
+    "status": "prohibited",
+    "note": "Food articles coated with mineral oil are prohibited, except where specifically permitted under FSSAI standards.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.3.1"
+  },
+  "carbide": {
+    "status": "prohibited",
+    "note": "Use of carbide gas (calcium carbide/acetylene) for artificial ripening of fruit is prohibited.",
+    "regulation": "FSSAI Prohibition and Restriction on Sales Regulations, 2011 \u2014 Reg. 2.3.5"
+  }
+}

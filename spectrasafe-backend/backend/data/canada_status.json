@@ -1,0 +1,17 @@
+{
+  "621": {
+    "permitted_ca": true,
+    "note": "MSG is not regulated as a food additive in Canada (treated as a flavour enhancer, no regulatory limit), but must be declared on the ingredient label.",
+    "source": "canada.ca \u2014 Monosodium Glutamate (MSG) Questions and Answers"
+  },
+  "211": {
+    "permitted_ca": true,
+    "note": "Sodium benzoate is a permitted preservative under Health Canada's List of Permitted Preservatives, subject to specified maximum levels per food category.",
+    "source": "canada.ca \u2014 Notice of Modification to the List of Permitted Preservatives"
+  },
+  "171": {
+    "permitted_ca": true,
+    "note": "Titanium dioxide (E171) remains permitted in Canada under Good Manufacturing Practice, per Health Canada's June 2022 State of the Science review.",
+    "source": "canada.ca \u2014 Titanium dioxide (TiO2) as a food additive: Current science report"
+  }
+}

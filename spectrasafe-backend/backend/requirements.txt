@@ -1,0 +1,38 @@
+# fastapi>=0.115
+# uvicorn[standard]>=0.30
+# sqlalchemy>=2.0
+# pydantic-settings>=2.4
+# python-multipart>=0.0.9
+# psycopg2-binary>=2.9   # only needed if DATABASE_URL points at Postgres
+
+# # OCR / CV stack used by app/services/ocr_pipeline.py
+# opencv-python-headless>=4.10
+# numpy>=1.26
+# ultralytics>=8.2
+# paddleocr>=2.8
+# paddlepaddle>=2.6
+# easyocr>=1.7
+# pytesseract>=0.3.10
+
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+pydantic-settings>=2.4
+python-multipart>=0.0.9
+psycopg2-binary>=2.9   # only needed if DATABASE_URL points at Postgres
+
+# OCR / CV stack used by app/services/ocr_pipeline.py
+opencv-python-headless>=4.10
+numpy>=1.26
+ultralytics>=8.2
+paddleocr>=2.8
+paddlepaddle>=2.6
+easyocr>=1.7
+pytesseract>=0.3.10
+
+# Auth
+passlib[bcrypt]>=1.7
+bcrypt<4.1          # passlib 1.7.x isn't compatible with bcrypt 4.1+'s API change
+pyjwt>=2.7
+email-validator>=2.0   # needed for pydantic's EmailStr
