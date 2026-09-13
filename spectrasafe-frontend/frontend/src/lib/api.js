@@ -698,39 +698,67 @@ export const api = {
   form.append("file", file);
   return request(`/api/v1/scans/${scanId}/license`, { method: "PATCH", body: form, isFormData: true });
 },
-  createScan: (file,location) => {
-    const form = new FormData();
-    form.append("location", location);
-    form.append("file", file);
-    return request("/api/v1/scans/", { method: "POST", body: form, isFormData: true });
-  },
+  createScan: (file, location) => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("location", location.label);
+  if (location.lat != null) form.append("latitude", location.lat);
+  if (location.lon != null) form.append("longitude", location.lon);
+  return request("/api/v1/scans/", { method: "POST", body: form, isFormData: true });
+},
   // Not using the generic request() helper here -- it discards response
   // headers, and batch scan needs the X-Batch-Errors header to report
   // which images (if any) failed alongside the ones that succeeded.
-  createBatchScan: async (files,location) => {
-    const form = new FormData();
-    form.append("location", location);
-    files.forEach((f) => form.append("files", f));
-    const headers = {};
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+  // createBatchScan: async (files,location) => {
+  //   const form = new FormData();
+  //   form.append("location", location);
+  //   files.forEach((f) => form.append("files", f));
+  //   const headers = {};
+  //   const token = getToken();
+  //   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
-    if (!res.ok) {
-      let detail = res.statusText;
-      try {
-        const data = await res.json();
-        detail = data.detail || detail;
-      } catch {
-        /* not JSON */
-      }
-      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-    }
-    const scans = await res.json();
-    const errorsHeader = res.headers.get("x-batch-errors");
-    const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
-    return { scans, errors };
-  },
+  //   const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
+  //   if (!res.ok) {
+  //     let detail = res.statusText;
+  //     try {
+  //       const data = await res.json();
+  //       detail = data.detail || detail;
+  //     } catch {
+  //       /* not JSON */
+  //     }
+  //     throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  //   }
+  //   const scans = await res.json();
+  //   const errorsHeader = res.headers.get("x-batch-errors");
+  //   const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
+  //   return { scans, errors };
+  // },
+
+
+  createBatchScan: async (files, location) => {
+  const form = new FormData();
+  form.append("location", location.label);
+  if (location.lat != null) form.append("latitude", location.lat);
+  if (location.lon != null) form.append("longitude", location.lon);
+  files.forEach((f) => form.append("files", f));
+  const headers = {};
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const data = await res.json();
+      detail = data.detail || detail;
+    } catch {}
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  const scans = await res.json();
+  const errorsHeader = res.headers.get("x-batch-errors");
+  const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
+  return { scans, errors };
+},
 
   createFlag: (payload) => request("/api/v1/flags/", { method: "POST", body: payload }),
   listFlags: () => request("/api/v1/flags/"),
