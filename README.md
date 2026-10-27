@@ -1,1 +1,1 @@
-# TEAM_31_Capstone
+# TEAM_31_Capstone Project
