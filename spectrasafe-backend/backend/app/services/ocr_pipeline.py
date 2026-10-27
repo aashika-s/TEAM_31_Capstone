@@ -1144,7 +1144,7 @@ except ImportError:
 # CONFIG & INIT — now environment-driven instead of hardcoded, so this module
 # can live inside a deployed service rather than a notebook working directory
 # ══════════════════════════════════════════════════════════════════════════════
-YOLO_WEIGHTS          = os.getenv("YOLO_WEIGHTS_PATH", "best (1).pt")
+YOLO_WEIGHTS          = os.getenv("YOLO_WEIGHTS_PATH", "best (2).pt")
 YOLO_CONF             = 0.50
 FSSAI_CONF            = 0.30    # Lowered specifically for FSSAI boxes
 OCR_CONF_GATE         = 0.55

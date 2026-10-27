@@ -1,4 +1,34 @@
-/** Initials avatar. Defaults to the accent tokens; pass bg/text hex values for role-tinted variants (e.g. FSSAI's amber, shopkeeper's teal, matching the wireframe). */
+// /** Initials avatar. Defaults to the accent tokens; pass bg/text hex values for role-tinted variants (e.g. FSSAI's amber, shopkeeper's teal, matching the wireframe). */
+// export default function Avatar({ initials, size = 36, bg, text }) {
+//   return (
+//     <div
+//       style={{
+//         width: size,
+//         height: size,
+//         fontSize: Math.round(size * 0.36),
+//         background: bg || "var(--color-accent-bg)",
+//         color: text || "var(--color-accent-text)",
+//       }}
+//       className="rounded-full flex items-center justify-center font-medium flex-shrink-0"
+//     >
+//       {initials}
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Initials avatar. Defaults to the accent tokens; pass bg/text hex values for role-tinted variants. */
 export default function Avatar({ initials, size = 36, bg, text }) {
   return (
     <div
@@ -9,7 +39,7 @@ export default function Avatar({ initials, size = 36, bg, text }) {
         background: bg || "var(--color-accent-bg)",
         color: text || "var(--color-accent-text)",
       }}
-      className="rounded-full flex items-center justify-center font-medium flex-shrink-0"
+      className="rounded-full flex items-center justify-center font-semibold flex-shrink-0 ring-1 ring-black/5 select-none"
     >
       {initials}
     </div>

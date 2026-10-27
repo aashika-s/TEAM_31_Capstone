@@ -6,6 +6,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.models.product import VegStatus
+from app.models.product import VerificationStatus
 
 
 class ProductCreate(BaseModel):
@@ -27,6 +28,14 @@ class ProductOut(ProductCreate):
     id: uuid.UUID
     brand_user_id: uuid.UUID
     created_at: datetime
+    license_conflict: dict | None = None
+    verification_status: VerificationStatus
+    risk_score: int
+    risk_flags: list[dict] | None = None
+    reviewed_by_user_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    state: str | None = None
+
 
     class Config:
         from_attributes = True
@@ -39,6 +48,14 @@ class ProductSummary(BaseModel):
     manufacturer_name: str
     fssai_license: str
     created_at: datetime
+    license_conflict: dict | None = None
+    verification_status: VerificationStatus
+    risk_score: int
+    risk_flags: list[dict] | None = None
+    reviewed_by_user_id: uuid.UUID | None = None
+    reviewed_at: datetime | None = None
+    state: str | None = None
+
 
     class Config:
         from_attributes = True
@@ -57,3 +74,6 @@ class BatchOut(BatchCreate):
 
     class Config:
         from_attributes = True
+
+class ProductReviewAction(BaseModel):
+    verification_status: VerificationStatus  # VERIFIED or REJECTED

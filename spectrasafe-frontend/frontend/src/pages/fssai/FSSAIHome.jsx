@@ -87,7 +87,6 @@
 
 
 
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -96,14 +95,13 @@ import {
   IconAlertTriangle,
   IconArrowRight,
   IconBuildingFactory2,
-  IconMap,
+  IconClock,
+  IconActivity,
 } from "@tabler/icons-react";
 
 import TopBar from "../../components/TopBar";
 import { ScreenContent } from "../../components/Screen";
 import Avatar from "../../components/Avatar";
-import Card from "../../components/Card";
-import ListItem from "../../components/ListItem";
 import Pill from "../../components/Pill";
 
 import { useAuth } from "../../context/AuthContext";
@@ -143,368 +141,549 @@ export default function FSSAIHome() {
   const reviewCount =
     flags?.filter((f) => f.status === "UNDER_REVIEW").length ?? null;
 
+  const resolvedCount =
+    flags?.filter((f) => f.status === "RESOLVED").length ?? null;
+
+  const recentFlags = flags?.slice(0, 3) ?? [];
+
   return (
     <>
-      <TopBar
-        title="Compliance Dashboard"
-        right={
-          <Avatar
-            initials={initials(user?.name)}
-            bg="var(--color-warn-bg)"
-            text="var(--color-warn-text)"
-          />
-        }
-      />
 
       <ScreenContent>
-        {/* ================= HEADER ================= */}
-        <div className="mb-7">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-bg text-accent text-[11px] font-semibold tracking-wide">
-                <IconShieldCheck size={14} />
+        <div className="max-w-[1100px] mx-auto">
+
+          {/* =====================================================
+              HEADER
+          ===================================================== */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between gap-4 mb-3">
+
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-accent-bg text-accent text-[10px] font-semibold tracking-[0.06em]">
+                <IconShieldCheck size={12} />
                 REGULATORY WORKSPACE
               </div>
-            </div>
 
-            <div className="hidden sm:flex items-center gap-2 text-xs text-text-secondary">
-              <span className="w-2 h-2 rounded-full bg-pass-text" />
-              Safety system operational
-            </div>
-          </div>
-
-          <h1 className="text-3xl font-semibold text-text-primary tracking-tight">
-            Compliance overview
-          </h1>
-
-          <p className="text-base text-text-secondary mt-1">
-            {user?.organization || user?.name}
-          </p>
-
-          <p className="text-sm text-text-secondary mt-3 max-w-2xl">
-            Monitor flagged products, review compliance concerns, and oversee
-            food safety activity across registered manufacturers.
-          </p>
-        </div>
-
-        {/* ================= QUICK ACTIONS ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-          {/* Flagged products */}
-          <button
-            type="button"
-            onClick={() => navigate("/fssai/flagged")}
-            className="
-              relative
-              overflow-hidden
-              text-left
-              rounded-app-lg
-              bg-accent
-              text-white
-              p-6
-              min-h-[175px]
-              shadow-[0_12px_30px_rgba(83,74,183,0.22)]
-              hover:shadow-[0_16px_36px_rgba(83,74,183,0.28)]
-              hover:-translate-y-0.5
-              transition-all
-              group
-            "
-          >
-            {/* Decorative circle */}
-            <div className="absolute -right-10 -top-14 w-44 h-44 rounded-full bg-white/10" />
-
-            <div className="relative z-10 h-full flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-app-md bg-white/15 flex items-center justify-center mb-5">
-                  <IconFlag size={25} />
-                </div>
-
-                <h2 className="text-lg font-semibold">
-                  Review flagged products
-                </h2>
-
-                <p className="text-sm text-white/75 mt-1">
-                  Investigate products requiring regulatory attention
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between mt-5">
-                <span className="text-sm font-medium">
-                  {openCount ?? "—"} open flags
-                </span>
-
-                <IconArrowRight
-                  size={21}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
+              <div className="hidden sm:flex items-center gap-2 text-[10px] text-text-secondary">
+                <span className="w-1.5 h-1.5 rounded-full bg-pass-text" />
+                Safety system operational
               </div>
             </div>
-          </button>
 
-          {/* Manufacturers */}
-          <button
-            type="button"
-            onClick={() => navigate("/fssai/manufacturers")}
-            className="
-              relative
-              overflow-hidden
-              text-left
-              rounded-app-lg
-              bg-bg-primary
-              border
-              border-border-tertiary
-              p-6
-              min-h-[175px]
-              shadow-[0_8px_24px_rgba(40,38,80,0.06)]
-              hover:border-accent
-              hover:-translate-y-0.5
-              transition-all
-              group
-            "
-          >
-            <div className="h-full flex flex-col justify-between">
-              <div>
-                <div className="w-12 h-12 rounded-app-md bg-accent-bg text-accent flex items-center justify-center mb-5">
-                  <IconBuildingFactory2 size={25} />
-                </div>
+            <h1 className="text-[25px] sm:text-[27px] font-semibold text-text-primary tracking-[-0.025em] leading-tight">
+              Compliance overview
+            </h1>
 
-                <h2 className="text-lg font-semibold text-text-primary">
-                  Manufacturer registry
-                </h2>
-
-                <p className="text-sm text-text-secondary mt-1">
-                  Browse manufacturers and their registered products
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between mt-5">
-                <span className="text-sm text-text-secondary">
-                  View manufacturers
-                </span>
-
-                <IconArrowRight
-                  size={21}
-                  className="text-text-tertiary group-hover:text-accent group-hover:translate-x-1 transition-all"
-                />
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* ================= METRICS ================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {/* Total flags */}
-          <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 shadow-[0_6px_20px_rgba(40,38,80,0.04)]">
-            <div className="w-10 h-10 rounded-app-md bg-accent-bg text-accent flex items-center justify-center mb-5">
-              <IconFlag size={20} />
-            </div>
-
-            <p className="text-3xl font-semibold text-text-primary">
-              {totalFlags ?? "—"}
+            <p className="text-xs text-text-secondary mt-1">
+              {user?.organization || user?.name}
             </p>
 
-            <p className="text-sm font-medium text-text-primary mt-1">
-              Total flags
-            </p>
-
-            <p className="text-xs text-text-tertiary mt-1">
-              Compliance issues recorded
+            <p className="text-[11px] text-text-secondary mt-2 max-w-[720px] leading-relaxed">
+              Monitor flagged products, review compliance concerns, and oversee
+              food safety activity across registered manufacturers.
             </p>
           </div>
 
-          {/* Open */}
-          <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 shadow-[0_6px_20px_rgba(40,38,80,0.04)]">
-            <div className="w-10 h-10 rounded-app-md bg-fail-bg text-fail-text flex items-center justify-center mb-5">
-              <IconAlertTriangle size={20} />
-            </div>
+          {/* =====================================================
+              METRICS
+          ===================================================== */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
 
-            <p className="text-3xl font-semibold text-fail-text">
-              {openCount ?? "—"}
-            </p>
-
-            <p className="text-sm font-medium text-text-primary mt-1">
-              Open flags
-            </p>
-
-            <p className="text-xs text-text-tertiary mt-1">
-              Requiring immediate attention
-            </p>
-          </div>
-
-          {/* Under review */}
-          <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 shadow-[0_6px_20px_rgba(40,38,80,0.04)]">
-            <div className="w-10 h-10 rounded-app-md bg-warn-bg text-warn-text flex items-center justify-center mb-5">
-              <IconShieldCheck size={20} />
-            </div>
-
-            <p className="text-3xl font-semibold text-warn-text">
-              {reviewCount ?? "—"}
-            </p>
-
-            <p className="text-sm font-medium text-text-primary mt-1">
-              Under review
-            </p>
-
-            <p className="text-xs text-text-tertiary mt-1">
-              Cases currently being assessed
-            </p>
-          </div>
-        </div>
-
-        {/* ================= ATTENTION PANEL ================= */}
-        <button
-          type="button"
-          onClick={() => navigate("/fssai/flagged")}
-          className="
-            w-full
-            text-left
-            rounded-app-lg
-            bg-bg-primary
-            border
-            border-border-tertiary
-            p-5
-            mb-7
-            shadow-[0_8px_24px_rgba(40,38,80,0.05)]
-            hover:border-accent
-            transition-all
-            group
-          "
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-app-md bg-fail-bg text-fail-text flex items-center justify-center flex-shrink-0">
-                <IconAlertTriangle size={23} />
+            {/* OPEN FLAGS */}
+            <div
+              className="
+                bg-bg-primary
+                border border-border-secondary
+                rounded-[12px]
+                px-4 py-4
+                shadow-[0_4px_16px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="w-9 h-9 rounded-[9px] bg-fail-bg text-fail-text flex items-center justify-center mb-3">
+                <IconFlag size={18} stroke={1.8} />
               </div>
 
-              <div>
-                <h2 className="text-sm font-semibold text-text-primary">
-                  Items requiring attention
-                </h2>
-
-                <p className="text-xs text-text-secondary mt-1">
-                  Review flagged products and unresolved compliance concerns
-                </p>
-              </div>
-            </div>
-
-            <IconArrowRight
-              size={21}
-              className="text-text-tertiary group-hover:text-accent group-hover:translate-x-1 transition-all flex-shrink-0"
-            />
-          </div>
-
-          <div className="flex items-center gap-7 mt-5">
-            <div>
-              <p className="text-2xl font-semibold text-fail-text">
+              <p className="text-[24px] font-semibold leading-none text-fail-text">
                 {openCount ?? "—"}
               </p>
 
-              <p className="text-xs text-text-secondary mt-0.5">
+              <p className="text-[12px] font-semibold text-text-primary mt-2">
                 Open flags
+              </p>
+
+              <p className="text-[10px] text-text-tertiary mt-0.5">
+                Requiring immediate attention
               </p>
             </div>
 
-            <div className="w-px h-9 bg-border-tertiary" />
+            {/* UNDER REVIEW */}
+            <div
+              className="
+                bg-bg-primary
+                border border-border-secondary
+                rounded-[12px]
+                px-4 py-4
+                shadow-[0_4px_16px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="w-9 h-9 rounded-[9px] bg-warn-bg text-warn-text flex items-center justify-center mb-3">
+                <IconClock size={18} stroke={1.8} />
+              </div>
 
-            <div>
-              <p className="text-2xl font-semibold text-warn-text">
+              <p className="text-[24px] font-semibold leading-none text-warn-text">
                 {reviewCount ?? "—"}
               </p>
 
-              <p className="text-xs text-text-secondary mt-0.5">
+              <p className="text-[12px] font-semibold text-text-primary mt-2">
                 Under review
+              </p>
+
+              <p className="text-[10px] text-text-tertiary mt-0.5">
+                Cases currently being assessed
+              </p>
+            </div>
+
+            {/* RESOLVED */}
+            <div
+              className="
+                bg-bg-primary
+                border border-border-secondary
+                rounded-[12px]
+                px-4 py-4
+                shadow-[0_4px_16px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="w-9 h-9 rounded-[9px] bg-pass-bg text-pass-text flex items-center justify-center mb-3">
+                <IconShieldCheck size={18} stroke={1.8} />
+              </div>
+
+              <p className="text-[24px] font-semibold leading-none text-pass-text">
+                {resolvedCount ?? "—"}
+              </p>
+
+              <p className="text-[12px] font-semibold text-text-primary mt-2">
+                Resolved
+              </p>
+
+              <p className="text-[10px] text-text-tertiary mt-0.5">
+                Issues successfully addressed
+              </p>
+            </div>
+
+            {/* MANUFACTURERS */}
+            <div
+              className="
+                bg-bg-primary
+                border border-border-secondary
+                rounded-[12px]
+                px-4 py-4
+                shadow-[0_4px_16px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="w-9 h-9 rounded-[9px] bg-accent-bg text-accent flex items-center justify-center mb-3">
+                <IconBuildingFactory2 size={18} stroke={1.8} />
+              </div>
+
+              <p className="text-[24px] font-semibold leading-none text-text-primary">
+                2
+              </p>
+
+              <p className="text-[12px] font-semibold text-text-primary mt-2">
+                Manufacturers
+              </p>
+
+              <p className="text-[10px] text-text-tertiary mt-0.5">
+                In your jurisdiction
               </p>
             </div>
           </div>
-        </button>
 
-        {/* ================= RECENT FLAGS ================= */}
-        <div className="flex items-end justify-between mb-3">
-          <div>
-            <p className="text-[11px] font-semibold tracking-wider text-text-tertiary uppercase">
-              Monitoring
-            </p>
+          {/* =====================================================
+              QUICK ACTIONS
+          ===================================================== */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
 
-            <h2 className="text-lg font-semibold text-text-primary mt-1">
-              Recent flags
-            </h2>
-          </div>
-
-          {flags && flags.length > 0 && (
+            {/* FLAGGED PRODUCTS */}
             <button
               type="button"
               onClick={() => navigate("/fssai/flagged")}
-              className="text-xs font-medium text-accent hover:underline"
+              className="
+                relative
+                overflow-hidden
+                text-left
+                min-h-[150px]
+                rounded-[12px]
+                bg-accent
+                text-white
+                p-4
+                shadow-[0_10px_24px_rgba(31,109,71,0.18)]
+                hover:-translate-y-0.5
+                hover:shadow-[0_14px_28px_rgba(31,109,71,0.23)]
+                transition-all duration-150
+                group
+              "
             >
-              View all
+              {/* decorative circle */}
+              <div className="absolute -right-12 -top-14 w-40 h-40 rounded-full bg-white/10" />
+
+              <div className="relative z-10 h-full flex flex-col justify-between">
+
+                <div>
+                  <div className="w-9 h-9 rounded-[9px] bg-white/15 flex items-center justify-center mb-4">
+                    <IconFlag size={19} stroke={1.8} />
+                  </div>
+
+                  <h2 className="text-[13px] font-semibold">
+                    Review flagged products
+                  </h2>
+
+                  <p className="text-[10px] text-white/75 mt-1 leading-relaxed">
+                    Investigate products requiring regulatory attention
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-[10px] font-medium">
+                    {openCount ?? "—"} open flags
+                  </span>
+
+                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center">
+                    <IconArrowRight
+                      size={15}
+                      className="text-accent group-hover:translate-x-0.5 transition-transform"
+                    />
+                  </div>
+                </div>
+
+              </div>
             </button>
+
+            {/* MANUFACTURERS */}
+            <button
+              type="button"
+              onClick={() => navigate("/fssai/manufacturers")}
+              className="
+                text-left
+                min-h-[150px]
+                rounded-[12px]
+                bg-bg-primary
+                border border-border-secondary
+                p-4
+                shadow-[0_6px_18px_rgba(40,38,80,0.04)]
+                hover:border-accent
+                hover:-translate-y-0.5
+                transition-all duration-150
+                group
+              "
+            >
+              <div className="h-full flex flex-col justify-between">
+
+                <div>
+                  <div className="w-9 h-9 rounded-[9px] bg-accent-bg text-accent flex items-center justify-center mb-4">
+                    <IconBuildingFactory2 size={19} stroke={1.8} />
+                  </div>
+
+                  <h2 className="text-[13px] font-semibold text-text-primary">
+                    Manufacturer registry
+                  </h2>
+
+                  <p className="text-[10px] text-text-secondary mt-1 leading-relaxed">
+                    Browse manufacturers and their registered products
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-[10px] text-text-secondary">
+                    View manufacturers
+                  </span>
+
+                  <div className="w-7 h-7 rounded-full bg-bg-secondary flex items-center justify-center">
+                    <IconArrowRight
+                      size={15}
+                      className="text-text-tertiary group-hover:text-accent group-hover:translate-x-0.5 transition-all"
+                    />
+                  </div>
+                </div>
+
+              </div>
+            </button>
+
+            {/* RECENT ACTIVITY */}
+            <div
+              className="
+                min-h-[150px]
+                rounded-[12px]
+                bg-bg-primary
+                border border-border-secondary
+                p-4
+                shadow-[0_6px_18px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[12px] font-semibold text-text-primary">
+                    Recent activity
+                  </p>
+
+                  <p className="text-[9px] text-text-tertiary mt-0.5">
+                    Latest compliance activity
+                  </p>
+                </div>
+
+                <IconActivity
+                  size={16}
+                  className="text-text-tertiary"
+                />
+              </div>
+
+              {!flags && !error && (
+                <div className="flex items-center justify-center h-[82px]">
+                  <p className="text-[10px] text-text-secondary">
+                    Loading activity…
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex items-center justify-center h-[82px]">
+                  <p className="text-[10px] text-fail-text">
+                    Unable to load activity
+                  </p>
+                </div>
+              )}
+
+              {flags && flags.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-[82px] text-center">
+                  <div className="w-8 h-8 rounded-full bg-bg-secondary flex items-center justify-center mb-2">
+                    <IconActivity
+                      size={15}
+                      className="text-text-tertiary"
+                    />
+                  </div>
+
+                  <p className="text-[10px] font-medium text-text-primary">
+                    No recent activity
+                  </p>
+
+                  <p className="text-[9px] text-text-tertiary mt-0.5">
+                    There have been no new flags or updates.
+                  </p>
+                </div>
+              )}
+
+              {flags && flags.length > 0 && (
+                <div className="space-y-2">
+                  {recentFlags.map((flag) => {
+                    const isOpen = flag.status === "OPEN";
+                    const isReview = flag.status === "UNDER_REVIEW";
+
+                    return (
+                      <button
+                        key={flag.id}
+                        type="button"
+                        onClick={() =>
+                          navigate(`/fssai/flagged/${flag.id}`)
+                        }
+                        className="
+                          w-full
+                          flex
+                          items-center
+                          gap-2
+                          text-left
+                          rounded-[8px]
+                          px-2
+                          py-1.5
+                          hover:bg-bg-secondary
+                          transition-colors
+                        "
+                      >
+                        <div
+                          className={`
+                            w-6 h-6
+                            rounded-[6px]
+                            flex
+                            items-center
+                            justify-center
+                            flex-shrink-0
+                            ${
+                              isOpen
+                                ? "bg-fail-bg text-fail-text"
+                                : isReview
+                                ? "bg-warn-bg text-warn-text"
+                                : "bg-pass-bg text-pass-text"
+                            }
+                          `}
+                        >
+                          <IconFlag size={12} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[9px] font-medium text-text-primary truncate">
+                            {flag.reason || "Compliance flag"}
+                          </p>
+
+                          <p className="text-[8px] text-text-tertiary">
+                            {timeAgo(flag.created_at)}
+                          </p>
+                        </div>
+
+                        <Pill
+                          variant={
+                            isOpen
+                              ? "fail"
+                              : isReview
+                              ? "warn"
+                              : "pass"
+                          }
+                        >
+                          {flag.status}
+                        </Pill>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* =====================================================
+              RECENT FLAGS / MONITORING
+          ===================================================== */}
+          <div className="flex items-end justify-between mb-2.5">
+            <div>
+              <p className="text-[9px] font-semibold tracking-[0.08em] text-text-tertiary uppercase">
+                Monitoring
+              </p>
+
+              <h2 className="text-[14px] font-semibold text-text-primary mt-0.5">
+                Recent flags
+              </h2>
+            </div>
+
+            {flags && flags.length > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate("/fssai/flagged")}
+                className="text-[10px] font-medium text-accent hover:underline"
+              >
+                View all
+              </button>
+            )}
+          </div>
+
+          {/* ERROR */}
+          {error && (
+            <div className="rounded-[12px] bg-fail-bg border border-fail-text/20 px-4 py-3 mb-4">
+              <p className="text-[10px] text-fail-text">
+                {error}
+              </p>
+            </div>
           )}
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="rounded-app-lg bg-fail-bg border border-border-tertiary px-4 py-4 mb-4">
-            <p className="text-xs text-fail-text">
-              {error}
-            </p>
-          </div>
-        )}
-
-        {/* Loading */}
-        {!flags && !error && (
-          <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-6">
-            <p className="text-sm text-text-secondary">
-              Loading compliance data…
-            </p>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {flags && flags.length === 0 && (
-          <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-8 text-center shadow-[0_6px_20px_rgba(40,38,80,0.04)]">
-            <div className="w-14 h-14 rounded-full bg-pass-bg flex items-center justify-center mx-auto mb-4">
-              <IconShieldCheck
-                size={26}
-                className="text-pass-text"
-              />
+          {/* LOADING */}
+          {!flags && !error && (
+            <div className="bg-bg-primary border border-border-secondary rounded-[12px] px-5 py-6">
+              <p className="text-[10px] text-text-secondary text-center">
+                Loading compliance data…
+              </p>
             </div>
+          )}
 
-            <h3 className="text-sm font-semibold text-text-primary">
-              No flags raised
-            </h3>
+          {/* EMPTY */}
+          {flags && flags.length === 0 && (
+            <div
+              className="
+                bg-bg-primary
+                border border-border-secondary
+                rounded-[12px]
+                min-h-[145px]
+                flex
+                flex-col
+                items-center
+                justify-center
+                text-center
+                shadow-[0_5px_18px_rgba(40,38,80,0.04)]
+              "
+            >
+              <div className="w-9 h-9 rounded-full bg-pass-bg flex items-center justify-center mb-2">
+                <IconShieldCheck
+                  size={17}
+                  className="text-pass-text"
+                />
+              </div>
 
-            <p className="text-xs text-text-secondary mt-1 max-w-md mx-auto">
-              There are currently no compliance issues requiring regulatory
-              attention.
-            </p>
+              <h3 className="text-[11px] font-semibold text-text-primary">
+                No flags raised
+              </h3>
 
-            <div className="inline-flex items-center gap-2 mt-4 text-xs text-pass-text font-medium">
-              <span className="w-2 h-2 rounded-full bg-pass-text" />
-              Compliance monitoring active
+              <p className="text-[9px] text-text-secondary mt-1">
+                There are currently no compliance issues requiring regulatory attention.
+              </p>
+
+              <div className="inline-flex items-center gap-1.5 mt-3 text-[9px] text-pass-text font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-pass-text" />
+                Compliance monitoring active
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Flag list */}
-        {flags && flags.length > 0 && (
-          <Card>
-            {flags.slice(0, 10).map((f) => {
-              const isOpen = f.status === "OPEN";
-              const isReview = f.status === "UNDER_REVIEW";
+          {/* FLAG LIST */}
+          {flags && flags.length > 0 && (
+            <div className="bg-bg-primary border border-border-secondary rounded-[12px] overflow-hidden">
+              {flags.slice(0, 5).map((f, index) => {
+                const isOpen = f.status === "OPEN";
+                const isReview = f.status === "UNDER_REVIEW";
 
-              return (
-                <ListItem
-                  key={f.id}
-                  icon={<IconFlag size={16} />}
-                  iconColor={
-                    isOpen
-                      ? "red"
-                      : isReview
-                      ? "amber"
-                      : "green"
-                  }
-                  title={f.reason}
-                  sub={timeAgo(f.created_at)}
-                  right={
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() =>
+                      navigate(`/fssai/flagged/${f.id}`)
+                    }
+                    className={`
+                      w-full
+                      flex
+                      items-center
+                      gap-3
+                      px-4
+                      py-3
+                      text-left
+                      hover:bg-bg-secondary
+                      transition-colors
+                      ${
+                        index !== Math.min(flags.length, 5) - 1
+                          ? "border-b border-border-tertiary"
+                          : ""
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                        w-8 h-8 rounded-[8px]
+                        flex items-center justify-center
+                        flex-shrink-0
+                        ${
+                          isOpen
+                            ? "bg-fail-bg text-fail-text"
+                            : isReview
+                            ? "bg-warn-bg text-warn-text"
+                            : "bg-pass-bg text-pass-text"
+                        }
+                      `}
+                    >
+                      <IconFlag size={15} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold text-text-primary truncate">
+                        {f.reason}
+                      </p>
+
+                      <p className="text-[9px] text-text-tertiary mt-0.5">
+                        {timeAgo(f.created_at)}
+                      </p>
+                    </div>
+
                     <Pill
                       variant={
                         isOpen
@@ -516,22 +695,26 @@ export default function FSSAIHome() {
                     >
                       {f.status}
                     </Pill>
-                  }
-                  onClick={() =>
-                    navigate(`/fssai/flagged/${f.id}`)
-                  }
-                />
-              );
-            })}
-          </Card>
-        )}
 
-        {/* ================= FOOTER INFO ================= */}
-        <div className="flex items-center justify-center gap-2 py-7 text-xs text-text-tertiary">
-          <IconShieldCheck size={14} />
-          <span>
-            Regulatory information is securely associated with your account.
-          </span>
+                    <IconArrowRight
+                      size={14}
+                      className="text-text-tertiary"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* FOOTER */}
+          <div className="flex items-center justify-center gap-2 py-6 text-[9px] text-text-tertiary">
+            <IconShieldCheck size={12} />
+
+            <span>
+              Regulatory information is securely associated with your account.
+            </span>
+          </div>
+
         </div>
       </ScreenContent>
     </>

@@ -39,3 +39,30 @@ def geocode(location_text: str) -> tuple[float, float] | None:
     except Exception:
         _CACHE[key] = None
         return None
+
+_REVERSE_CACHE: dict[str, str | None] = {}
+
+def reverse_geocode_state(lat: float, lon: float) -> str | None:
+    """
+    Resolves a state name from coordinates via Nominatim's reverse
+    endpoint -- auto-populates Scan.state for jurisdiction filtering
+    without asking the shopkeeper to separately pick a state; they
+    already picked a specific location, and the state is implied by it.
+    """
+    key = f"{round(lat, 4)},{round(lon, 4)}"
+    if key in _REVERSE_CACHE:
+        return _REVERSE_CACHE[key]
+    try:
+        resp = requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lon, "format": "json", "addressdetails": 1},
+            headers=_HEADERS,
+            timeout=5,
+        )
+        resp.raise_for_status()
+        state = resp.json().get("address", {}).get("state")
+        _REVERSE_CACHE[key] = state
+        return state
+    except Exception:
+        _REVERSE_CACHE[key] = None
+        return None

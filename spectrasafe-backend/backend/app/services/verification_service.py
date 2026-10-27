@@ -13,7 +13,7 @@ import re
 
 from sqlalchemy.orm import Session
 
-from app.models.product import Product
+from app.models.product import Product, VerificationStatus
 
 _STOPWORDS_MIN_LEN = 3
 
@@ -23,6 +23,7 @@ def verify_against_registry(extracted: dict, db: Session) -> dict:
         "status": "NOT_CHECKED",
         "matched_product_id": None,
         "matched_product_name": None,
+        "matched_product_verification_status": None,
         "mismatches": [],
         "notes": [],
     }
@@ -47,6 +48,28 @@ def verify_against_registry(extracted: dict, db: Session) -> dict:
     result["status"] = "MATCHED"
     result["matched_product_id"] = str(product.id)
     result["matched_product_name"] = product.product_name
+    result["matched_product_verification_status"] = product.verification_status.value
+
+    # A rejected registration matching a real scan is a stronger signal
+    # than an unmatched or unregistered one -- FSSAI already looked at
+    # this exact license/manufacturer pairing and decided it doesn't hold
+    # up, so a shopkeeper should never see this presented as a clean
+    # match. Escalated the same way a data discrepancy is, below.
+    if product.verification_status == VerificationStatus.REJECTED:
+        result["status"] = "MATCHED_REJECTED_PRODUCT"
+        result["notes"].append(
+            f"This FSSAI license is registered to '{product.product_name}', but FSSAI "
+            "has reviewed and REJECTED this registration."
+        )
+    elif product.verification_status == VerificationStatus.PENDING:
+        # Not escalated -- pending is neutral, not evidence of wrongdoing.
+        # But a shopkeeper shouldn't read a pending self-declared
+        # registration as equivalent to a reviewed, approved one.
+        result["notes"].append(
+            f"'{product.product_name}' is registered under this license but has not "
+            "yet been reviewed by FSSAI. This match reflects a self-declared "
+            "registration, not a verified one."
+        )
 
     # Ingredients consistency -- crude token-overlap ratio rather than an
     # exact match, since OCR wording will never exactly match the
@@ -77,7 +100,7 @@ def verify_against_registry(extracted: dict, db: Session) -> dict:
                 f"declaration: {', '.join(missing_declared)}"
             )
 
-    if result["mismatches"]:
+    if result["mismatches"] and result["status"] == "MATCHED":
         result["status"] = "MATCHED_WITH_DISCREPANCIES"
 
     return result

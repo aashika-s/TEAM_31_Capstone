@@ -1,0 +1,16 @@
+{
+  "model": "193 spectral-profile features + ExtraTrees(500, balanced), user-confirmed/auto crop",
+  "n_images": 85,
+  "n_safe": 22,
+  "n_unsafe": 63,
+  "cv": "leave-one-contaminant-out; each water image treated as an independent sample (UNVERIFIED assumption)",
+  "auc": 0.884,
+  "thr_lo": 0.35,
+  "thr_hi": 0.55,
+  "unsafe_flagged_unsafe": 0.873,
+  "unsafe_called_safe": 0.048,
+  "safe_called_safe": 0.409,
+  "safe_called_unsafe": 0.182,
+  "inconclusive": 0.165,
+  "note": "Contaminants covered: bavistin, carbendazim, DAP, dimethoate, imidacloprid, neem-coated urea vs water. If the 22 water images are repeat captures of one sample, accuracy drops to ~69% (never sees safe water). Dataset labels, not lab measurements."
+}

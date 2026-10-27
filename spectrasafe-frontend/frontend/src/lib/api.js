@@ -623,14 +623,17 @@
 
 
 
-
-
 /**
  * Thin fetch wrapper for the SpectraSafe API. Attaches the stored JWT to
  * every request unless auth:false is passed (only the register/login
  * endpoints need that, since there's no token yet at that point).
+ *
+ * API_BASE is "" by default, so every URL (API calls AND image URLs) is
+ * relative to the page's own origin. That works on the laptop and on a phone
+ * as long as the dev server proxies /api to the backend (vite.config.js).
+ * Set VITE_API_BASE_URL in .env only if you serve the API from another host.
  */
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 const TOKEN_KEY = "spectrasafe_token";
 
 export function getToken() {
@@ -687,78 +690,58 @@ export const api = {
   createBatch: (productId, payload) =>
     request(`/api/v1/products/${productId}/batches`, { method: "POST", body: payload }),
   listBatches: (productId) => request(`/api/v1/products/${productId}/batches`),
+  getReviewQueue: () => request("/api/v1/products/queue"),
+  reviewProduct: (id, status) =>
+    request(`/api/v1/products/${id}/review`, { method: "PATCH", body: { verification_status: status } }),
 
   listScans: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return request(`/api/v1/scans/${query ? `?${query}` : ""}`);
   },
   getScan: (id) => request(`/api/v1/scans/${id}`),
+  // Image URL for a stored scan photo. Use this everywhere instead of building
+  // the URL by hand, so it works on the laptop and on a phone.
+  scanImageUrl: (filename) => `${API_BASE}/api/v1/scans/images/${filename}`,
   rescanLicense: (scanId, file) => {
-  const form = new FormData();
-  form.append("file", file);
-  return request(`/api/v1/scans/${scanId}/license`, { method: "PATCH", body: form, isFormData: true });
-},
+    const form = new FormData();
+    form.append("file", file);
+    return request(`/api/v1/scans/${scanId}/license`, { method: "PATCH", body: form, isFormData: true });
+  },
   createScan: (file, location) => {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("location", location.label);
-  if (location.lat != null) form.append("latitude", location.lat);
-  if (location.lon != null) form.append("longitude", location.lon);
-  return request("/api/v1/scans/", { method: "POST", body: form, isFormData: true });
-},
+    const form = new FormData();
+    form.append("file", file);
+    form.append("location", location.label);
+    if (location.lat != null) form.append("latitude", location.lat);
+    if (location.lon != null) form.append("longitude", location.lon);
+    return request("/api/v1/scans/", { method: "POST", body: form, isFormData: true });
+  },
   // Not using the generic request() helper here -- it discards response
   // headers, and batch scan needs the X-Batch-Errors header to report
   // which images (if any) failed alongside the ones that succeeded.
-  // createBatchScan: async (files,location) => {
-  //   const form = new FormData();
-  //   form.append("location", location);
-  //   files.forEach((f) => form.append("files", f));
-  //   const headers = {};
-  //   const token = getToken();
-  //   if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  //   const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
-  //   if (!res.ok) {
-  //     let detail = res.statusText;
-  //     try {
-  //       const data = await res.json();
-  //       detail = data.detail || detail;
-  //     } catch {
-  //       /* not JSON */
-  //     }
-  //     throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-  //   }
-  //   const scans = await res.json();
-  //   const errorsHeader = res.headers.get("x-batch-errors");
-  //   const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
-  //   return { scans, errors };
-  // },
-
-
   createBatchScan: async (files, location) => {
-  const form = new FormData();
-  form.append("location", location.label);
-  if (location.lat != null) form.append("latitude", location.lat);
-  if (location.lon != null) form.append("longitude", location.lon);
-  files.forEach((f) => form.append("files", f));
-  const headers = {};
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+    const form = new FormData();
+    form.append("location", location.label);
+    if (location.lat != null) form.append("latitude", location.lat);
+    if (location.lon != null) form.append("longitude", location.lon);
+    files.forEach((f) => form.append("files", f));
+    const headers = {};
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const data = await res.json();
-      detail = data.detail || detail;
-    } catch {}
-    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
-  }
-  const scans = await res.json();
-  const errorsHeader = res.headers.get("x-batch-errors");
-  const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
-  return { scans, errors };
-},
+    const res = await fetch(`${API_BASE}/api/v1/scans/batch`, { method: "POST", headers, body: form });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try {
+        const data = await res.json();
+        detail = data.detail || detail;
+      } catch {}
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+    const scans = await res.json();
+    const errorsHeader = res.headers.get("x-batch-errors");
+    const errors = errorsHeader ? JSON.parse(errorsHeader) : [];
+    return { scans, errors };
+  },
 
   createFlag: (payload) => request("/api/v1/flags/", { method: "POST", body: payload }),
   listFlags: () => request("/api/v1/flags/"),
@@ -766,24 +749,81 @@ export const api = {
   updateFlagStatus: (id, status) => request(`/api/v1/flags/${id}`, { method: "PATCH", body: { status } }),
 
   createNotice: (payload) => request("/api/v1/notices/", { method: "POST", body: payload }),
-listNotices: () => request("/api/v1/notices/"),
-getNotice: (id) => request(`/api/v1/notices/${id}`),
-downloadNoticePdf: async (id) => {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}/api/v1/notices/${id}/pdf`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error("Failed to download notice PDF");
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `notice-${id}.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
-},
+  listNotices: () => request("/api/v1/notices/"),
+  getNotice: (id) => request(`/api/v1/notices/${id}`),
+  downloadNoticePdf: async (id) => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/api/v1/notices/${id}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to download notice PDF");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `notice-${id}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 
   searchEncyclopedia: (q) => request(`/api/v1/encyclopedia/search?q=${encodeURIComponent(q)}`),
   getEncyclopediaEntry: (slug) => request(`/api/v1/encyclopedia/${encodeURIComponent(slug)}`),
-};
 
+  // Profile: Store details / Officer ID & credentials
+  updateProfile: (payload) => request("/api/v1/auth/me/profile", { method: "PATCH", body: payload }),
+  // Profile: Location settings / Jurisdiction zone
+  updateLocation: (payload) => request("/api/v1/auth/me/location", { method: "PATCH", body: payload }),
+  // Profile: Notifications
+  updateNotifications: (payload) => request("/api/v1/auth/me/notifications", { method: "PATCH", body: payload }),
+  // Profile: Data & privacy
+  updatePrivacy: (payload) => request("/api/v1/auth/me/privacy", { method: "PATCH", body: payload }),
+  changePassword: (payload) => request("/api/v1/auth/me/password", { method: "PATCH", body: payload }),
+  deleteAccount: () => request("/api/v1/auth/me", { method: "DELETE" }),
+  // Not using the generic request() helper -- we need the raw blob to
+  // trigger a file download rather than parsed JSON.
+  exportMyData: async () => {
+    const headers = {};
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/api/v1/auth/me/export`, { headers });
+    if (!res.ok) throw new Error("Failed to export account data");
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "spectrasafe-my-data.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    return data;
+  },
+
+  createLabel: (title, data, layout) => request("/api/v1/labels/", { method: "POST", body: { title, data, layout } }),
+  updateLabel: (id, data, layout) => request(`/api/v1/labels/${id}`, { method: "PATCH", body: { data, layout } }),
+  generateLabelDraft: (description) => request("/api/v1/labels/generate-draft", { method: "POST", body: { description } }),
+  listLabels: () => request("/api/v1/labels/"),
+  getLabel: (id) => request(`/api/v1/labels/${id}`),
+  checkLabelCompliance: (id) => request(`/api/v1/labels/${id}/compliance`),
+  uploadLabelAsset: (labelId, file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request(`/api/v1/labels/${labelId}/assets`, { method: "POST", body: form, isFormData: true });
+  },
+
+  // ---------- Water screening ----------
+  waterModelInfo: () => request("/api/v1/water/model-info"),
+
+  waterStats: () => request("/api/v1/water/stats"),
+
+  listWaterSamples: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== null && v !== undefined && v !== "")
+    ).toString();
+    return request(`/api/v1/water/samples${qs ? `?${qs}` : ""}`);
+  },
+
+  createWaterSample: (form) =>
+    request("/api/v1/water/samples", { method: "POST", body: form, isFormData: true }),
+
+  waterImageUrl: (filename) => `${API_BASE}/api/v1/water/images/${filename}`,
+};

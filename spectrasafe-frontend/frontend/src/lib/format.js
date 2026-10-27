@@ -28,6 +28,11 @@ const STATUS_LABEL = {
   NEEDS_REVIEW: "Needs review",
   NON_COMPLIANT: "Non-compliant",
   SUSPICIOUS: "Suspicious",
+  MATCHED: "Matched",
+  MATCHED_WITH_DISCREPANCIES: "Matched — discrepancies",
+  MATCHED_REJECTED_PRODUCT: "Matched — registration rejected",
+  NOT_REGISTERED: "Not registered",
+  NO_LICENSE_EXTRACTED: "No license extracted",
 };
 
 export function statusLabel(status) {

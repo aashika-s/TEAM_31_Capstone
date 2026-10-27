@@ -62,3 +62,37 @@ def init_db():
     # Base.metadata before create_all runs.
     from app.models import scan, product, user, flag  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    _sync_missing_columns()
+
+
+def _sync_missing_columns():
+    """create_all() only creates tables that don't exist yet -- it never
+    ALTERs an existing table, so a checked-in spectrasafe.db from before
+    the profile fields were added would otherwise 500 on first query.
+    This adds any columns the model declares but the live table is
+    missing, without touching existing rows/data. SQLite only (fine for
+    this MVP); swap to real Alembic migrations before using Postgres.
+    """
+    if not settings.database_url.startswith("sqlite"):
+        return
+
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.tables.values():
+            if not inspector.has_table(table.name):
+                continue
+            existing_cols = {c["name"] for c in inspector.get_columns(table.name)}
+            for col in table.columns:
+                if col.name in existing_cols:
+                    continue
+                col_type = col.type.compile(engine.dialect)
+                default_sql = ""
+                if col.default is not None and getattr(col.default, "arg", None) is not None:
+                    val = col.default.arg
+                    if isinstance(val, bool):
+                        default_sql = f" DEFAULT {1 if val else 0}"
+                    elif isinstance(val, (int, float)):
+                        default_sql = f" DEFAULT {val}"
+                conn.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {col_type}{default_sql}'))

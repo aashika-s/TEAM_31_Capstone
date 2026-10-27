@@ -103,6 +103,10 @@ from app.api.v1.flags import router as flags_router
 from app.api.v1.encyclopedia import router as encyclopedia_router
 from app.services.ocr_pipeline import warm_up_models
 from app.api.v1 import notices
+from app.api.v1 import labels
+from app.api.v1 import water
+      
+
 
 app = FastAPI(title="SpectraSafe API", version="0.1.0")
 
@@ -120,6 +124,8 @@ app.include_router(products_router)
 app.include_router(flags_router)
 app.include_router(encyclopedia_router)
 app.include_router(notices.router)
+app.include_router(labels.router)
+app.include_router(water.router)
 
 
 @app.on_event("startup")

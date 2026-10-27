@@ -365,6 +365,8 @@ import Screen, { ScreenContent } from "./components/Screen";
 import TopBar from "./components/TopBar";
 import Avatar from "./components/Avatar";
 import { ButtonOutline } from "./components/Button";
+import WaterLayout from "./pages/water/WaterLayout";
+      
 
 
 function initials(name) {
@@ -440,8 +442,11 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+       <Route path="/spcb/*" element={<ProtectedRoute role="SPCB"><WaterLayout /></ProtectedRoute>} />
+       <Route path="/cpcb/*" element={<ProtectedRoute role="CPCB"><WaterLayout /></ProtectedRoute>} />
 
       <Route path="/" element={<Navigate to="/login" replace />} />
+
       
     </Routes>
   );

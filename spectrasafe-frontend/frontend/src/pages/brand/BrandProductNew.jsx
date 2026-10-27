@@ -657,165 +657,91 @@
 
 
 
-
 // PHASE 6
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  IconPlus,
-  IconX,
-  IconPackage,
-  IconBuildingFactory2,
-  IconFileText,
-  IconFlask,
-} from "@tabler/icons-react";
+import { IconPlus, IconX, IconPackage } from "@tabler/icons-react";
 
 import TopBar from "../../components/TopBar";
 import { ScreenContent } from "../../components/Screen";
-import SectionLabel from "../../components/SectionLabel";
-import { ButtonPrimary } from "../../components/Button";
+import { ButtonPrimary, ButtonOutline } from "../../components/Button";
 import { api } from "../../lib/api";
 
 const EMPTY = {
-  product_name: "",
-  brand_name: "",
-  description: "",
-  ingredients_raw: "",
-  allergens: "",
-  net_quantity: "",
-  mrp: "",
-  veg_status: "",
-  manufacturer_name: "",
-  manufacturer_address: "",
-  fssai_license: "",
+  product_name: "", brand_name: "", description: "", ingredients_raw: "",
+  allergens: "", net_quantity: "", mrp: "", veg_status: "",
+  manufacturer_name: "", manufacturer_address: "", fssai_license: "", state: "",
 };
 
-const SUGGESTED_NUTRIENTS = [
-  "Energy (kcal)",
-  "Protein(g)",
-  "Total Fat (g)",
-  "Saturated Fat(g)",
-  "Trans Fat(g)",
-  "Total Carbs (g)",
-  "Total Sugar(g)",
-  "Dietary Fibre(g)",
-  "Sodium (mg)",
+const INDIAN_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+  "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+  "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+  "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands",
+  "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+  "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
 ];
 
-const inputClass =
-  "w-full px-3.5 py-3.5 border border-border-tertiary rounded-app-md " +
-  "text-base bg-bg-primary text-text-primary outline-none " +
-  "placeholder:text-text-tertiary focus:border-accent focus:ring-2 " +
-  "focus:ring-accent/10 transition-all";
+const SUGGESTED_NUTRIENTS = [
+  "Energy (kcal)", "Protein(g)", "Total Fat (g)", "Saturated Fat(g)", "Trans Fat(g)",
+  "Total Carbs (g)", "Total Sugar(g)", "Dietary Fibre(g)", "Sodium (mg)",
+];
 
-const labelClass =
-  "text-sm font-medium text-text-primary block mb-1.5";
-
-function SectionHeader({ icon: Icon, title, description }) {
+function NumberedSection({ number, title, description, children }) {
   return (
-    <div className="flex items-start gap-3 mb-5">
-      <div className="w-10 h-10 rounded-app-md bg-accent-bg flex items-center justify-center flex-shrink-0">
-        <Icon size={19} className="text-accent" />
+    <div className="mb-5">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-6 h-6 rounded-full bg-accent text-white text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
+          {number}
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+          {description && <p className="text-xs text-text-secondary mt-0.5">{description}</p>}
+        </div>
       </div>
-
-      <div>
-        <h2 className="text-sm font-semibold text-text-primary">
-          {title}
-        </h2>
-
-        {description && (
-          <p className="text-xs text-text-secondary mt-0.5">
-            {description}
-          </p>
-        )}
-      </div>
+      <div className="pl-9">{children}</div>
     </div>
   );
 }
 
 export default function BrandProductNew() {
   const navigate = useNavigate();
-
   const [form, setForm] = useState(EMPTY);
-  const [nutritionRows, setNutritionRows] = useState([
-    { label: "", value: "" },
-  ]);
-
+  const [nutritionRows, setNutritionRows] = useState([{ label: "", value: "" }]);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   function update(field, value) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
   function updateNutritionRow(index, field, value) {
-    setNutritionRows((rows) =>
-      rows.map((row, i) =>
-        i === index
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row
-      )
-    );
+    setNutritionRows((rows) => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
   }
 
   function addNutritionRow() {
-    setNutritionRows((rows) => [
-      ...rows,
-      {
-        label: "",
-        value: "",
-      },
-    ]);
+    setNutritionRows((rows) => [...rows, { label: "", value: "" }]);
   }
 
   function removeNutritionRow(index) {
-    setNutritionRows((rows) =>
-      rows.filter((_, i) => i !== index)
-    );
+    setNutritionRows((rows) => rows.filter((_, i) => i !== index));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     setError(null);
     setSubmitting(true);
-
     try {
-      const nutritionEntries = nutritionRows
-        .map((row) => [
-          row.label.trim(),
-          row.value.trim(),
-        ])
-        .filter(([label, value]) => label && value);
-
-      const nutrition =
-        nutritionEntries.length > 0
-          ? Object.fromEntries(nutritionEntries)
-          : null;
-
+      const nutritionEntries = nutritionRows.map((r) => [r.label.trim(), r.value.trim()]).filter(([l, v]) => l && v);
+      const nutrition = nutritionEntries.length > 0 ? Object.fromEntries(nutritionEntries) : null;
       const payload = {
         ...form,
-
         veg_status: form.veg_status || null,
-
-        allergens: form.allergens
-          ? form.allergens
-              .split(",")
-              .map((a) => a.trim())
-              .filter(Boolean)
-          : null,
-
+        allergens: form.allergens ? form.allergens.split(",").map((a) => a.trim()).filter(Boolean) : null,
         nutrition,
       };
-
       const product = await api.createProduct(payload);
-
       navigate(`/brand/products/${product.id}`);
     } catch (err) {
       setError(err.message);
@@ -826,432 +752,148 @@ export default function BrandProductNew() {
 
   return (
     <>
-      <TopBar
-        title="Register a product"
-        onBack={() => navigate("/brand/products")}
-      />
-
+      <TopBar title="Register a product" onBack={() => navigate("/brand/products")} />
       <ScreenContent>
-        <div className="max-w-3xl mx-auto">
-
-          {/* PAGE HEADER */}
-          <div className="mb-7">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-bg text-accent text-[11px] font-semibold tracking-wide mb-3">
-              <IconPackage size={14} />
-              PRODUCT REGISTRATION
-            </div>
-
-            <h1 className="text-2xl md:text-3xl font-semibold text-text-primary tracking-tight">
-              Register a new product
-            </h1>
-
-            <p className="text-sm text-text-secondary mt-1">
-              Add product details to your verified SpectraSafe portfolio.
-            </p>
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-5">
+            <h1 className="text-xl font-semibold text-text-primary tracking-tight">Register a new product</h1>
+            <p className="text-xs text-text-secondary mt-1">Add product details to your portfolio. All fields marked with * are required.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[var(--shadow-card)]">
 
-            {/* PRODUCT INFORMATION */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
-
-              <SectionHeader
-                icon={IconPackage}
-                title="Product information"
-                description="Basic information about the product."
-              />
-
-              <div className="space-y-4">
-
+            <NumberedSection number={1} title="Basic information" description="Enter the basic details of your product.">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className={labelClass}>
-                    Product name *
-                  </label>
-
-                  <input
-                    required
-                    value={form.product_name}
-                    onChange={(e) =>
-                      update("product_name", e.target.value)
-                    }
-                    className={inputClass}
-                    placeholder="e.g. Crunchy Wheat Biscuits"
-                  />
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Product name *</label>
+                  <input required value={form.product_name} onChange={(e) => update("product_name", e.target.value)} className="form-input" placeholder="e.g. Organic Tomato Basil Pasta Sauce" />
                 </div>
-
                 <div>
-                  <label className={labelClass}>
-                    Brand name *
-                  </label>
-
-                  <input
-                    required
-                    value={form.brand_name}
-                    onChange={(e) =>
-                      update("brand_name", e.target.value)
-                    }
-                    className={inputClass}
-                    placeholder="e.g. FreshBite"
-                  />
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Brand name *</label>
+                  <input required value={form.brand_name} onChange={(e) => update("brand_name", e.target.value)} className="form-input" placeholder="e.g. LAYS ptd." />
                 </div>
-
-                <div>
-                  <label className={labelClass}>
-                    Description
-                  </label>
-
-                  <textarea
-                    rows={3}
-                    value={form.description}
-                    onChange={(e) =>
-                      update("description", e.target.value)
-                    }
-                    className={`${inputClass} resize-none`}
-                    placeholder="Brief description of the product..."
-                  />
-                </div>
-
               </div>
-            </div>
-
-
-            {/* INGREDIENTS & ALLERGENS */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
-
-              <SectionHeader
-                icon={IconFlask}
-                title="Ingredients & allergens"
-                description="Declare ingredients and known allergens."
-              />
-
-              <div className="space-y-4">
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className={labelClass}>
-                    Ingredients
-                  </label>
-
-                  <textarea
-                    rows={4}
-                    value={form.ingredients_raw}
-                    onChange={(e) =>
-                      update("ingredients_raw", e.target.value)
-                    }
-                    className={`${inputClass} resize-none`}
-                    placeholder="e.g. Wheat Flour, Sugar, Vegetable Oil..."
-                  />
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Net quantity *</label>
+                  <input required value={form.net_quantity} onChange={(e) => update("net_quantity", e.target.value)} className="form-input" placeholder="e.g. 500 g" />
                 </div>
-
                 <div>
-                  <label className={labelClass}>
-                    Allergens
-                  </label>
-
-                  <input
-                    value={form.allergens}
-                    onChange={(e) =>
-                      update("allergens", e.target.value)
-                    }
-                    className={inputClass}
-                    placeholder="e.g. wheat, soy, milk"
-                  />
-
-                  <p className="text-[11px] text-text-tertiary mt-1.5">
-                    Separate multiple allergens with commas.
-                  </p>
+                  <label className="text-xs font-medium text-text-secondary block mb-1">MRP</label>
+                  <input value={form.mrp} onChange={(e) => update("mrp", e.target.value)} className="form-input" placeholder="e.g. ₹99" />
                 </div>
-
               </div>
-            </div>
-
-
-            {/* PACKAGING & PRODUCT DETAILS */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
-
-              <SectionHeader
-                icon={IconFileText}
-                title="Packaging & product details"
-                description="Quantity, pricing and product classification."
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className={labelClass}>
-                    Net quantity
-                  </label>
-
-                  <input
-                    value={form.net_quantity}
-                    onChange={(e) =>
-                      update("net_quantity", e.target.value)
-                    }
-                    className={inputClass}
-                    placeholder="e.g. 500g"
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>
-                    MRP
-                  </label>
-
-                  <input
-                    value={form.mrp}
-                    onChange={(e) =>
-                      update("mrp", e.target.value)
-                    }
-                    className={inputClass}
-                    placeholder="e.g. ₹99"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className={labelClass}>
-                    Veg / Non-veg
-                  </label>
-
-                  <select
-                    value={form.veg_status}
-                    onChange={(e) =>
-                      update("veg_status", e.target.value)
-                    }
-                    className={inputClass}
-                  >
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Veg / Non-veg</label>
+                  <select value={form.veg_status} onChange={(e) => update("veg_status", e.target.value)} className="form-input">
                     <option value="">Not specified</option>
                     <option value="VEG">Veg</option>
                     <option value="NON_VEG">Non-veg</option>
                   </select>
                 </div>
-
+                <div>
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Description</label>
+                  <input value={form.description} onChange={(e) => update("description", e.target.value)} className="form-input" placeholder="Brief description" />
+                </div>
               </div>
-            </div>
+            </NumberedSection>
 
+            <hr className="border-border-tertiary mb-5" />
 
-            {/* MANUFACTURER */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
+            <NumberedSection number={2} title="Composition" description="Ingredients and allergen declaration.">
+              <label className="text-xs font-medium text-text-secondary block mb-1">Ingredients</label>
+              <textarea rows={3} value={form.ingredients_raw} onChange={(e) => update("ingredients_raw", e.target.value)} className="form-input mb-3" placeholder="e.g. Wheat Flour, Sugar, Vegetable Oil..." />
+              <label className="text-xs font-medium text-text-secondary block mb-1">Allergens</label>
+              <input value={form.allergens} onChange={(e) => update("allergens", e.target.value)} className="form-input" placeholder="e.g. wheat, soy, milk" />
+              <p className="text-[11px] text-text-tertiary mt-1">Separate multiple allergens with commas.</p>
+            </NumberedSection>
 
-              <SectionHeader
-                icon={IconBuildingFactory2}
-                title="Manufacturer details"
-                description="Registered manufacturer and licensing information."
-              />
+            <hr className="border-border-tertiary mb-5" />
 
-              <div className="space-y-4">
-
+            <NumberedSection number={3} title="Manufacturer details" description="Enter manufacturer information as per label.">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className={labelClass}>
-                    Manufacturer name *
-                  </label>
-
-                  <input
-                    required
-                    value={form.manufacturer_name}
-                    onChange={(e) =>
-                      update(
-                        "manufacturer_name",
-                        e.target.value
-                      )
-                    }
-                    className={inputClass}
-                    placeholder="e.g. Fresh Foods Pvt Ltd"
-                  />
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Manufacturer name *</label>
+                  <input required value={form.manufacturer_name} onChange={(e) => update("manufacturer_name", e.target.value)} className="form-input" placeholder="e.g. LAYS ptd." />
                 </div>
-
                 <div>
-                  <label className={labelClass}>
-                    Manufacturer address
-                  </label>
-
-                  <textarea
-                    rows={3}
-                    value={form.manufacturer_address}
-                    onChange={(e) =>
-                      update(
-                        "manufacturer_address",
-                        e.target.value
-                      )
-                    }
-                    className={`${inputClass} resize-none`}
-                    placeholder="Complete manufacturing address..."
-                  />
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Manufacturing state *</label>
+                  <select required value={form.state} onChange={(e) => update("state", e.target.value)} className="form-input">
+                    <option value="">Select state</option>
+                    {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
-
-                <div>
-                  <label className={labelClass}>
-                    FSSAI license number *
-                  </label>
-
-                  <input
-                    required
-                    value={form.fssai_license}
-                    onChange={(e) =>
-                      update(
-                        "fssai_license",
-                        e.target.value
-                      )
-                    }
-                    className={inputClass}
-                    placeholder="14-digit license number"
-                  />
-
-                  <p className="text-[11px] text-text-tertiary mt-1.5">
-                    Enter the valid FSSAI license associated with this product.
-                  </p>
-                </div>
-
               </div>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-text-secondary block mb-1">Manufacturer address</label>
+                  <textarea rows={2} value={form.manufacturer_address} onChange={(e) => update("manufacturer_address", e.target.value)} className="form-input" placeholder="Enter complete address" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-secondary block mb-1">FSSAI license number *</label>
+                  <input required value={form.fssai_license} onChange={(e) => update("fssai_license", e.target.value)} className="form-input" placeholder="14-digit number" />
+                  <p className="text-[11px] text-text-tertiary mt-1">Determines FSSAI jurisdiction that reviews this registration.</p>
+                </div>
+              </div>
+            </NumberedSection>
 
+            <hr className="border-border-tertiary mb-5" />
 
-            {/* NUTRITION */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
-
-              <SectionHeader
-                icon={IconFlask}
-                title="Nutrition information"
-                description="Optional nutritional values for the product."
-              />
-
-              <div className="space-y-3">
-
+            <NumberedSection number={4} title="Nutrition information" description="Optional nutritional values, per 100g/100ml.">
+              <div className="space-y-2">
                 {nutritionRows.map((row, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-2 items-start"
-                  >
-
-                    <div className="flex-1">
-                      <input
-                        value={row.label}
-                        onChange={(e) =>
-                          updateNutritionRow(
-                            i,
-                            "label",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Nutrient name"
-                        list="nutrient-suggestions"
-                        className={inputClass}
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      <input
-                        value={row.value}
-                        onChange={(e) =>
-                          updateNutritionRow(
-                            i,
-                            "value",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Value"
-                        className={inputClass}
-                      />
-                    </div>
-
+                  <div key={i} className="flex gap-2 items-start">
+                    <input
+                      value={row.label}
+                      onChange={(e) => updateNutritionRow(i, "label", e.target.value)}
+                      placeholder="Nutrient name"
+                      list="nutrient-suggestions"
+                      className="form-input flex-1"
+                    />
+                    <input
+                      value={row.value}
+                      onChange={(e) => updateNutritionRow(i, "value", e.target.value)}
+                      placeholder="Value"
+                      className="form-input w-28"
+                    />
                     <button
                       type="button"
-                      onClick={() =>
-                        removeNutritionRow(i)
-                      }
+                      onClick={() => removeNutritionRow(i)}
                       disabled={nutritionRows.length === 1}
-                      className="
-                        p-3
-                        rounded-app-md
-                        border
-                        border-border-tertiary
-                        text-text-tertiary
-                        hover:text-fail-text
-                        hover:bg-fail-bg
-                        transition-colors
-                        disabled:opacity-30
-                        disabled:hover:bg-transparent
-                      "
-                      aria-label="Remove nutrient row"
+                      className="w-10 h-[42px] flex items-center justify-center rounded-app-md border border-border-tertiary text-text-tertiary hover:text-fail-text hover:bg-fail-bg transition-colors disabled:opacity-30"
                     >
-                      <IconX size={16} />
+                      <IconX size={14} />
                     </button>
-
                   </div>
                 ))}
-
                 <datalist id="nutrient-suggestions">
-                  {SUGGESTED_NUTRIENTS.map((nutrient) => (
-                    <option
-                      key={nutrient}
-                      value={nutrient}
-                    />
-                  ))}
+                  {SUGGESTED_NUTRIENTS.map((n) => <option key={n} value={n} />)}
                 </datalist>
-
-                <button
-                  type="button"
-                  onClick={addNutritionRow}
-                  className="
-                    inline-flex
-                    items-center
-                    gap-1.5
-                    text-xs
-                    font-medium
-                    text-accent
-                    hover:text-accent-text
-                    transition-colors
-                    mt-1
-                  "
-                >
-                  <IconPlus size={15} />
+                <button type="button" onClick={addNutritionRow} className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline">
+                  <IconPlus size={13} />
                   Add nutrient
                 </button>
-
               </div>
-            </div>
+            </NumberedSection>
 
-
-            {/* ERROR */}
             {error && (
-              <div className="rounded-app-md bg-fail-bg border border-fail-text/20 px-4 py-3">
-                <p className="text-xs text-fail-text">
-                  {error}
-                </p>
-              </div>
+              <div className="rounded-app-md bg-fail-bg border border-fail-text/20 px-3 py-2.5 mb-4 text-xs text-fail-text">{error}</div>
             )}
 
-
-            {/* SUBMIT */}
-            <div className="bg-bg-primary border border-border-tertiary rounded-app-lg p-5 md:p-6 shadow-[0_4px_20px_rgba(40,38,80,0.04)]">
-
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">
-                    Ready to register?
-                  </p>
-
-                  <p className="text-xs text-text-secondary mt-1">
-                    The product will be added to your verified portfolio.
-                  </p>
-                </div>
-
-                <div className="md:w-52">
-                  <ButtonPrimary
-                    type="submit"
-                    disabled={submitting}
-                  >
-                    {submitting
-                      ? "Registering..."
-                      : "Register product"}
-                  </ButtonPrimary>
-                </div>
-
-              </div>
-
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <ButtonOutline type="button" className="!w-auto !mt-0" onClick={() => navigate("/brand/products")}>
+                Cancel
+              </ButtonOutline>
+              <ButtonPrimary type="submit" className="!w-auto !mt-0 px-5" disabled={submitting}>
+                {submitting ? "Registering…" : "Register product"}
+              </ButtonPrimary>
             </div>
-
           </form>
 
+          <p className="text-center text-[11px] text-text-tertiary mt-4">
+            Your registration will be reviewed by FSSAI before it's marked verified.
+          </p>
         </div>
       </ScreenContent>
     </>

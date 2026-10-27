@@ -215,3 +215,4 @@ def classify_violation_types(compliance_result: dict) -> list[str]:
         if "banned/restricted term" in lower or "trans fat" in lower or "ins/e-number" in lower:
             types.add("ADDITIVE")
     return sorted(types)
+

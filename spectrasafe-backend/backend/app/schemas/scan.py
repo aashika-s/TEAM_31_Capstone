@@ -24,6 +24,8 @@ class ScanOut(BaseModel):
     compliance_result: dict[str, Any]
     product_verification: dict[str, Any] | None
     created_at: datetime
+    state: str | None
+    stored_image_filename: str | None
 
     class Config:
         from_attributes = True
@@ -43,6 +45,8 @@ class ScanSummary(BaseModel):
     longitude: float | None
     violation_types: list[str] = []
     created_at: datetime
+    state: str | None
+    stored_image_filename: str | None = None
 
     class Config:
         from_attributes = True

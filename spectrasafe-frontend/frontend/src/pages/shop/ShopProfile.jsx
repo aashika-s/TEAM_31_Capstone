@@ -5,7 +5,7 @@ import { ScreenContent } from "../../components/Screen";
 import Card from "../../components/Card";
 import ListItem from "../../components/ListItem";
 import Avatar from "../../components/Avatar";
-import { ButtonOutline } from "../../components/Button";
+import { ButtonDanger } from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
 
 function initials(name) {
@@ -26,7 +26,7 @@ export default function ShopProfile() {
 
   return (
     <>
-      <TopBar title="Profile" />
+      
       <ScreenContent>
         <Card>
           <div className="flex items-center gap-3 mb-2">
@@ -43,28 +43,24 @@ export default function ShopProfile() {
 
         <Card>
           {SECTIONS.map((s) => (
-            <ListItem key={s.key} icon={<s.icon size={16} />} title={s.label} sub="Coming in a later phase" />
+            <ListItem
+              key={s.key}
+              icon={<s.icon size={16} />}
+              title={s.label}
+              onClick={() => navigate(`/shop/profile/${s.key}`)}
+            />
           ))}
         </Card>
 
-        <ButtonOutline
+               <ButtonDanger
           onClick={() => {
             logout();
             navigate("/login");
           }}
-          className="
-    w-full
-    px-4 py-2.5
-    rounded-app-md
-    bg-red-600
-    text-sm font-medium
-    text-black
-    hover:bg-red-700
-    transition-colors
-  "
+          className="w-full"
         >
           Sign out
-        </ButtonOutline>
+        </ButtonDanger>
       </ScreenContent>
     </>
   );

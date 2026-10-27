@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { IconStack } from "@tabler/icons-react";
+import { IconStack, IconAlertTriangle, IconCheck, IconX } from "@tabler/icons-react";
 import TopBar from "../../components/TopBar";
 import { ScreenContent } from "../../components/Screen";
 import Card, { CardTitle, CardSub } from "../../components/Card";
 import Pill from "../../components/Pill";
 import SectionLabel from "../../components/SectionLabel";
 import ListItem from "../../components/ListItem";
+import { ButtonPrimary, ButtonOutline } from "../../components/Button";
 import { api } from "../../lib/api";
 import { timeAgo } from "../../lib/format";
 
@@ -20,20 +21,40 @@ function KeyValueRow({ label, value }) {
   );
 }
 
-// Read-only, on purpose -- FSSAI has oversight access to the registry
+const VERIFICATION_VARIANT = { PENDING: "warn", VERIFIED: "pass", REJECTED: "fail" };
+const VERIFICATION_LABEL = { PENDING: "Pending review", VERIFIED: "Verified", REJECTED: "Rejected" };
+
+// Read-only for registry data, on purpose -- FSSAI has oversight access
 // (phase-6 addition), not the ability to register products or batches,
-// which stays Brand-only both here and on the backend.
+// which stays Brand-only both here and on the backend. The one write
+// action FSSAI does have here is the verification decision itself,
+// which is exactly the authority this role is meant to exercise.
 export default function FSSAIProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [batches, setBatches] = useState(null);
   const [error, setError] = useState(null);
+  const [reviewError, setReviewError] = useState(null);
+  const [reviewing, setReviewing] = useState(false);
 
   useEffect(() => {
     api.getProduct(productId).then(setProduct).catch((e) => setError(e.message));
     api.listBatches(productId).then(setBatches).catch(() => {});
   }, [productId]);
+
+  async function review(status) {
+    setReviewing(true);
+    setReviewError(null);
+    try {
+      const updated = await api.reviewProduct(productId, status);
+      setProduct(updated);
+    } catch (e) {
+      setReviewError(e.message);
+    } finally {
+      setReviewing(false);
+    }
+  }
 
   if (error) {
     return (
@@ -63,14 +84,59 @@ export default function FSSAIProductDetail() {
         <Card>
           <div className="flex items-center justify-between mb-1">
             <CardTitle className="text-[15px]">{product.product_name}</CardTitle>
-            {product.veg_status && (
-              <Pill variant={product.veg_status === "VEG" ? "pass" : "warn"}>
-                {product.veg_status === "VEG" ? "Veg" : "Non-veg"}
+            <div className="flex gap-1.5">
+              {product.veg_status && (
+                <Pill variant={product.veg_status === "VEG" ? "pass" : "warn"}>
+                  {product.veg_status === "VEG" ? "Veg" : "Non-veg"}
+                </Pill>
+              )}
+              <Pill variant={VERIFICATION_VARIANT[product.verification_status]}>
+                {VERIFICATION_LABEL[product.verification_status]}
               </Pill>
-            )}
+            </div>
           </div>
           <CardSub>{product.brand_name}</CardSub>
+          {typeof product.risk_score === "number" && (
+            <CardSub className="mt-1">Risk score: {product.risk_score}</CardSub>
+          )}
         </Card>
+
+        {product.risk_flags?.length > 0 && (
+          <Card>
+            <CardTitle className="mb-2">Risk flags</CardTitle>
+            {product.risk_flags.map((f, i) => (
+              <div key={i} className="flex items-start gap-2 text-[13px] text-warn-text mb-1.5">
+                <IconAlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>{f.label}:</strong> {f.detail}
+                </span>
+              </div>
+            ))}
+          </Card>
+        )}
+
+        {product.license_conflict && (
+          <Card>
+            <CardTitle className="mb-1 text-fail-text">License conflict</CardTitle>
+            <p className="text-[13px] text-fail-text">{product.license_conflict.detail}</p>
+          </Card>
+        )}
+
+        {product.verification_status === "PENDING" && (
+          <>
+            {reviewError && <p className="text-xs text-fail-text mb-2">{reviewError}</p>}
+            <div className="flex gap-2 mb-3">
+              <ButtonPrimary onClick={() => review("VERIFIED")} disabled={reviewing}>
+                <IconCheck size={14} className="inline mr-1 -mt-0.5" />
+                Verify
+              </ButtonPrimary>
+              <ButtonOutline onClick={() => review("REJECTED")} disabled={reviewing}>
+                <IconX size={14} className="inline mr-1 -mt-0.5" />
+                Reject
+              </ButtonOutline>
+            </div>
+          </>
+        )}
 
         <Card>
           <KeyValueRow label="FSSAI license" value={product.fssai_license} />

@@ -89,3 +89,12 @@ class Scan(Base):
     product_verification = Column(JSON, nullable=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+
+    # Auto-derived from the scan's geocoded coordinates via reverse
+    # geocoding -- never asked of the shopkeeper directly, since they
+    # already picked a specific location; the state is implied by it.
+    state = Column(String, nullable=True)
+        # The uploaded photo itself, kept on disk so the result page can show
+    # it -- previously discarded after OCR ran, which meant there was
+    # nothing to display.
+    stored_image_filename = Column(String, nullable=True)

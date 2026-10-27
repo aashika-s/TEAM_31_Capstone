@@ -275,8 +275,6 @@
 
 
 
-
-
 """
 POST /api/v1/scans      — upload a label photo, run OCR + compliance, persist it (SHOPKEEPER only)
 GET  /api/v1/scans       — list scans: SHOPKEEPER sees their own, FSSAI sees all
@@ -289,10 +287,18 @@ import uuid
 from pathlib import Path
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+)
 from sqlalchemy.orm import Session
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
+from app.services import ocr_cache
 from app.core.database import get_db
 from app.core.deps import require_role
 from app.models.scan import Scan, ComplianceStatus
@@ -312,9 +318,11 @@ router = APIRouter(
     tags=["scans"],
 )
 
+
 _ALLOWED_SUFFIXES = {".jpg", ".jpeg", ".png"}
 
 _require_shopkeeper = require_role(UserRole.SHOPKEEPER)
+
 _require_shopkeeper_or_fssai = require_role(
     UserRole.SHOPKEEPER,
     UserRole.FSSAI,
@@ -325,56 +333,45 @@ _require_shopkeeper_or_fssai = require_role(
 # CREATE SINGLE SCAN
 # ============================================================
 
+_SCAN_IMAGES_DIR = Path("app/data/scan_images")
+_SCAN_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
 @router.post("/", response_model=ScanOut)
 def create_scan(
     file: UploadFile = File(...),
     location: str = Form(...),
-
-    # Coordinates supplied by LocationAutocomplete
     latitude: float | None = Form(None),
     longitude: float | None = Form(None),
-
     db: Session = Depends(get_db),
     current_user: User = Depends(_require_shopkeeper),
 ):
     suffix = Path(file.filename or "").suffix.lower()
-
     if suffix not in _ALLOWED_SUFFIXES:
-        raise HTTPException(
-            400,
-            f"Unsupported file type '{suffix}'. Use jpg/jpeg/png.",
-        )
+        raise HTTPException(400, f"Unsupported file type '{suffix}'. Use jpg/jpeg/png.")
 
-    # --------------------------------------------------------
-    # Save uploaded file temporarily
-    # --------------------------------------------------------
-
-    with tempfile.NamedTemporaryFile(
-        suffix=suffix,
-        delete=False,
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
 
+    image_bytes = Path(tmp_path).read_bytes()
+
+    # Persist the photo permanently BEFORE the temp file gets deleted --
+    # this is what the result page actually displays afterward.
+    stored_filename = f"{uuid.uuid4()}{suffix}"
+    (_SCAN_IMAGES_DIR / stored_filename).write_bytes(image_bytes)
+
+    cached = ocr_cache.get_cached(image_bytes)
     try:
-        # ----------------------------------------------------
-        # OCR
-        # ----------------------------------------------------
-
-        extracted = ocr_pipeline.run_pipeline(tmp_path)
-
+        if cached is not None:
+            extracted = cached
+        else:
+            extracted = ocr_pipeline.run_pipeline(tmp_path)
+            ocr_cache.set_cached(image_bytes, extracted)
     except Exception as e:
-        raise HTTPException(
-            500,
-            f"OCR pipeline failed: {e}",
-        )
-
+        raise HTTPException(500, f"OCR pipeline failed: {e}")
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
-    # --------------------------------------------------------
-    # Compliance
-    # --------------------------------------------------------
 
     compliance = run_compliance_check(extracted)
 
@@ -391,11 +388,12 @@ def create_scan(
     # Determine compliance status
     # --------------------------------------------------------
 
-    status = ComplianceStatus(
-        compliance["status"]
-    )
+    status = ComplianceStatus(compliance["status"])
 
-    if verification["status"] == "MATCHED_WITH_DISCREPANCIES":
+    if verification["status"] in (
+        "MATCHED_WITH_DISCREPANCIES",
+        "MATCHED_REJECTED_PRODUCT",
+    ):
         status = ComplianceStatus.SUSPICIOUS
 
     # --------------------------------------------------------
@@ -411,12 +409,23 @@ def create_scan(
         coords = geocoding_service.geocode(location)
 
     # --------------------------------------------------------
+    # Reverse geocode state from coordinates
+    # --------------------------------------------------------
+
+    state = (
+        geocoding_service.reverse_geocode_state(*coords)
+        if coords
+        else None
+    )
+
+    # --------------------------------------------------------
     # Create Scan
     # --------------------------------------------------------
 
     scan = Scan(
         id=uuid.uuid4(),
         image_filename=file.filename,
+        stored_image_filename=stored_filename,
 
         fssai_license=extracted.get(
             "fssai_license"
@@ -436,6 +445,8 @@ def create_scan(
 
         latitude=coords[0] if coords else None,
         longitude=coords[1] if coords else None,
+
+        state=state,
 
         ocr_result=extracted,
         compliance_result=compliance,
@@ -548,7 +559,6 @@ def rescan_license(
 
     return scan
 
-
 # ============================================================
 # CREATE BATCH SCAN
 # ============================================================
@@ -573,17 +583,19 @@ def create_batch_scan(
 
     # --------------------------------------------------------
     # Determine coordinates ONCE for the entire batch.
-    #
-    # If LocationAutocomplete provided coordinates,
-    # use them directly.
-    #
-    # Otherwise geocode the location text once.
     # --------------------------------------------------------
 
     if latitude is not None and longitude is not None:
         coords = (latitude, longitude)
     else:
         coords = geocoding_service.geocode(location)
+
+    # Reverse geocode state ONCE for the entire batch.
+    state = (
+        geocoding_service.reverse_geocode_state(*coords)
+        if coords
+        else None
+    )
 
     scans_out = []
     errors = []
@@ -620,14 +632,56 @@ def create_batch_scan(
             shutil.copyfileobj(file.file, tmp)
             tmp_path = tmp.name
 
+        # ----------------------------------------------------
+        # Permanently store uploaded image
+        # ----------------------------------------------------
+
+        try:
+            image_bytes = Path(tmp_path).read_bytes()
+
+            stored_filename = (
+                f"{uuid.uuid4()}{suffix}"
+            )
+
+            (
+                _SCAN_IMAGES_DIR / stored_filename
+            ).write_bytes(image_bytes)
+
+        except Exception as e:
+            Path(tmp_path).unlink(
+                missing_ok=True
+            )
+
+            errors.append(
+                {
+                    "filename": file.filename,
+                    "error": (
+                        f"Failed to store image: {e}"
+                    ),
+                }
+            )
+            continue
+
         try:
             # ------------------------------------------------
-            # OCR
+            # OCR with cache
             # ------------------------------------------------
 
-            extracted = ocr_pipeline.run_pipeline(
-                tmp_path
+            cached = ocr_cache.get_cached(
+                image_bytes
             )
+
+            if cached is not None:
+                extracted = cached
+            else:
+                extracted = ocr_pipeline.run_pipeline(
+                    tmp_path
+                )
+
+                ocr_cache.set_cached(
+                    image_bytes,
+                    extracted,
+                )
 
         except Exception as e:
             errors.append(
@@ -654,13 +708,17 @@ def create_batch_scan(
                 extracted
             )
 
-            violation_types = classify_violation_types(
-                compliance
+            violation_types = (
+                classify_violation_types(
+                    compliance
+                )
             )
 
-            verification = verify_against_registry(
-                extracted,
-                db,
+            verification = (
+                verify_against_registry(
+                    extracted,
+                    db,
+                )
             )
 
             # ------------------------------------------------
@@ -671,9 +729,9 @@ def create_batch_scan(
                 compliance["status"]
             )
 
-            if (
-                verification["status"]
-                == "MATCHED_WITH_DISCREPANCIES"
+            if verification["status"] in (
+                "MATCHED_WITH_DISCREPANCIES",
+                "MATCHED_REJECTED_PRODUCT",
             ):
                 status = ComplianceStatus.SUSPICIOUS
 
@@ -683,7 +741,12 @@ def create_batch_scan(
 
             scan = Scan(
                 id=uuid.uuid4(),
+
+                # Original uploaded filename
                 image_filename=file.filename,
+
+                # Permanently stored image filename
+                stored_image_filename=stored_filename,
 
                 fssai_license=extracted.get(
                     "fssai_license"
@@ -701,8 +764,19 @@ def create_batch_scan(
 
                 location_text=location,
 
-                latitude=coords[0] if coords else None,
-                longitude=coords[1] if coords else None,
+                latitude=(
+                    coords[0]
+                    if coords
+                    else None
+                ),
+
+                longitude=(
+                    coords[1]
+                    if coords
+                    else None
+                ),
+
+                state=state,
 
                 ocr_result=extracted,
                 compliance_result=compliance,
@@ -741,7 +815,6 @@ def create_batch_scan(
         },
     )
 
-
 # ============================================================
 # LIST SCANS
 # ============================================================
@@ -760,9 +833,22 @@ def list_scans(
 ):
     query = db.query(Scan)
 
+    # SHOPKEEPER:
+    # Only see scans created by this shopkeeper.
     if current_user.role == UserRole.SHOPKEEPER:
         query = query.filter(
             Scan.scanned_by_user_id == current_user.id
+        )
+
+    # FSSAI:
+    # CENTRAL officers can see all scans.
+    # State-level officers can only see scans from their state.
+    elif (
+        current_user.role == UserRole.FSSAI
+        and current_user.state != "CENTRAL"
+    ):
+        query = query.filter(
+            Scan.state == current_user.state
         )
 
     if status is not None:
@@ -804,6 +890,8 @@ def get_scan(
             "Scan not found",
         )
 
+    # SHOPKEEPER:
+    # Can only view their own scans.
     if (
         current_user.role == UserRole.SHOPKEEPER
         and scan.scanned_by_user_id != current_user.id
@@ -813,4 +901,27 @@ def get_scan(
             "Scan not found",
         )
 
+    # FSSAI:
+    # CENTRAL officers can view all scans.
+    # State-level officers can only view scans from their state.
+    if (
+        current_user.role == UserRole.FSSAI
+        and current_user.state != "CENTRAL"
+        and scan.state != current_user.state
+    ):
+        raise HTTPException(
+            404,
+            "Scan not found",
+        )
+
     return scan
+
+@router.get("/images/{filename}")
+def get_scan_image(filename: str):
+    # Public/unauthenticated for the same reason label assets are --
+    # an <img> tag can't attach an Authorization header. A scanned
+    # product photo isn't sensitive personal data, so this tradeoff holds.
+    path = _SCAN_IMAGES_DIR / filename
+    if not path.exists():
+        raise HTTPException(404, "Image not found")
+    return FileResponse(path)

@@ -230,6 +230,7 @@
 
 
 
+
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 import {
@@ -238,6 +239,7 @@ import {
   IconBuildingFactory2,
   IconUser,
   IconMap,
+  IconShieldCheck,
 } from "@tabler/icons-react";
 
 import Screen from "../../components/Screen";
@@ -252,6 +254,13 @@ import FSSAIProductDetail from "./FSSAIProductDetail";
 import FSSAIHeatmap from "./FSSAIHeatmap";
 import FSSAINoticeNew from "./FSSAINoticeNew";
 import FSSAIProfile from "./FSSAIProfile";
+
+import OfficerCredentialsPage from "../../components/profile/OfficerCredentialsPage";
+import LocationSettingsPage from "../../components/profile/LocationSettingsPage";
+import ReportsExportsPage from "../../components/profile/ReportsExportsPage";
+import SecurityAccessPage from "../../components/profile/SecurityAccessPage";
+
+import FSSAIReviewQueue from "./FSSAIReviewQueue";
 
 const TABS = [
   {
@@ -284,28 +293,35 @@ const TABS = [
     icon: IconUser,
     path: "/fssai/profile",
   },
+  {
+    key: "queue",
+    label: "Review",
+    icon: IconShieldCheck,
+    path: "/fssai/queue",
+  },
 ];
 
 export default function FSSAILayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const pathname = location.pathname;
+
   const active =
-    TABS.find(
-      (t) =>
-        location.pathname === t.path ||
-        (t.key === "home" &&
-          location.pathname === "/fssai") ||
-        (t.key === "flagged" &&
-          location.pathname.startsWith("/fssai/flagged")) ||
-        (t.key === "manufacturers" &&
-          (
-            location.pathname.startsWith("/fssai/manufacturers") ||
-            location.pathname.startsWith("/fssai/products")
-          )) ||
-        (t.key === "heatmap" &&
-          location.pathname.startsWith("/fssai/heatmap"))
-    )?.key || "home";
+    pathname === "/fssai"
+      ? "home"
+      : pathname.startsWith("/fssai/flagged")
+      ? "flagged"
+      : pathname.startsWith("/fssai/manufacturers") ||
+        pathname.startsWith("/fssai/products")
+      ? "manufacturers"
+      : pathname.startsWith("/fssai/heatmap")
+      ? "heatmap"
+      : pathname.startsWith("/fssai/profile")
+      ? "profile"
+      : pathname.startsWith("/fssai/queue")
+      ? "queue"
+      : "home";
 
   return (
     <Screen
@@ -325,11 +341,13 @@ export default function FSSAILayout() {
     >
       <Routes>
 
+        {/* HOME */}
         <Route
           index
           element={<FSSAIHome />}
         />
 
+        {/* FLAGGED */}
         <Route
           path="flagged"
           element={<FSSAIFlagged />}
@@ -340,6 +358,7 @@ export default function FSSAILayout() {
           element={<FSSAIFlagDetail />}
         />
 
+        {/* MANUFACTURERS */}
         <Route
           path="manufacturers"
           element={<FSSAIManufacturers />}
@@ -355,19 +374,66 @@ export default function FSSAILayout() {
           element={<FSSAIProductDetail />}
         />
 
+        {/* HEATMAP */}
         <Route
           path="heatmap"
           element={<FSSAIHeatmap />}
         />
 
+        {/* NOTICE */}
         <Route
           path="notice/new"
           element={<FSSAINoticeNew />}
         />
 
+        {/* PROFILE */}
         <Route
           path="profile"
           element={<FSSAIProfile />}
+        />
+
+        <Route
+          path="profile/credentials"
+          element={
+            <OfficerCredentialsPage
+              backTo="/fssai/profile"
+            />
+          }
+        />
+
+        <Route
+          path="profile/zone"
+          element={
+            <LocationSettingsPage
+              backTo="/fssai/profile"
+              title="Jurisdiction zone"
+              helperText="The area you're responsible for monitoring. Used to scope which scans and manufacturers show up as relevant to you."
+            />
+          }
+        />
+
+        <Route
+          path="profile/reports"
+          element={
+            <ReportsExportsPage
+              backTo="/fssai/profile"
+            />
+          }
+        />
+
+        <Route
+          path="profile/security"
+          element={
+            <SecurityAccessPage
+              backTo="/fssai/profile"
+            />
+          }
+        />
+
+        {/* REVIEW */}
+        <Route
+          path="queue"
+          element={<FSSAIReviewQueue />}
         />
 
       </Routes>

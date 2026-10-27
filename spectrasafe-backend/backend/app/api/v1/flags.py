@@ -269,6 +269,7 @@ from app.models.flag import Flag
 from app.models.scan import Scan
 from app.models.user import User, UserRole
 from app.schemas.flag import FlagCreate, FlagOut, FlagStatusUpdate
+from app.models.scan import Scan
 
 router = APIRouter(prefix="/api/v1/flags", tags=["flags"])
 
@@ -311,6 +312,8 @@ def list_flags(
     query = db.query(Flag)
     if current_user.role == UserRole.SHOPKEEPER:
         query = query.filter(Flag.flagged_by_user_id == current_user.id)
+    elif current_user.role == UserRole.FSSAI and current_user.state != "CENTRAL":
+        query = query.join(Scan, Flag.scan_id == Scan.id).filter(Scan.state == current_user.state)
     return query.order_by(Flag.created_at.desc()).limit(limit).all()
 
 
@@ -325,6 +328,10 @@ def get_flag(
         raise HTTPException(404, "Flag not found")
     if current_user.role == UserRole.SHOPKEEPER and flag.flagged_by_user_id != current_user.id:
         raise HTTPException(404, "Flag not found")
+    if current_user.role == UserRole.FSSAI and current_user.state != "CENTRAL":
+        scan = db.get(Scan, flag.scan_id)
+        if scan is None or scan.state != current_user.state:
+            raise HTTPException(404, "Flag not found")
     return flag
 
 
@@ -335,11 +342,13 @@ def update_flag_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(_require_fssai),
 ):
-    # Only FSSAI can change a flag's status -- a shopkeeper raising a flag
-    # shouldn't be able to mark their own report resolved.
     flag = db.get(Flag, flag_id)
     if flag is None:
         raise HTTPException(404, "Flag not found")
+    if current_user.state != "CENTRAL":
+        scan = db.get(Scan, flag.scan_id)
+        if scan is None or scan.state != current_user.state:
+            raise HTTPException(404, "Flag not found")
     flag.status = payload.status
     db.commit()
     db.refresh(flag)

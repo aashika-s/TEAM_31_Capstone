@@ -196,11 +196,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ButtonPrimary } from "../components/Button";
 
-const ROLE_HOME = {
-  BRAND: "/brand",
-  SHOPKEEPER: "/shop",
-  FSSAI: "/fssai",
-};
+const ROLE_HOME = { BRAND: "/brand", SHOPKEEPER: "/shop", FSSAI: "/fssai", SPCB: "/spcb", CPCB: "/cpcb" };
 
 export default function Login() {
   const { login } = useAuth();
@@ -227,7 +223,7 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-y-auto bg-[#f6f7fb] flex items-center justify-center p-4 sm:p-6">
+    <div className="relative min-h-screen overflow-y-auto bg-[#f6fbf9] flex items-center justify-center p-4 sm:p-6">
 
       {/* =====================================================
           FULL INDIA-THEMED BACKGROUND
@@ -250,9 +246,9 @@ export default function Login() {
         className="
           fixed inset-0
           bg-gradient-to-r
-          from-[#faf9f4]/75
-          via-[#faf9f4]/55
-          to-[#f6f7fb]/85
+          from-[#fbf8f3]/75
+          via-[#fbf8f3]/55
+          to-[#f6fbf9]/85
           pointer-events-none
         "
       />
@@ -266,7 +262,7 @@ export default function Login() {
           w-[500px]
           h-[500px]
           rounded-full
-          bg-[#4338ca]/8
+          bg-[#38ca86]/8
           blur-[110px]
           pointer-events-none
         "
@@ -291,10 +287,10 @@ export default function Login() {
             <div className="
               w-11 h-11
               rounded-xl
-              bg-[#4338ca]
+              bg-[#38ca86]
               text-white
               flex items-center justify-center
-              shadow-[0_8px_20px_rgba(67,56,202,0.25)]
+              shadow-[0_8px_20px_rgba(31,109,71,0.25)]
             ">
               <span className="text-lg font-bold">
                 S
@@ -307,12 +303,12 @@ export default function Login() {
                 text-[18px]
                 font-semibold
                 tracking-[-0.02em]
-                text-[#15172a]
+                text-[#152a20]
               ">
                 SpectraSafe
               </h1>
 
-              <p className="text-[11px] text-[#6c7080]">
+              <p className="text-[11px] text-[#81776b]">
                 Product Safety Intelligence
               </p>
 
@@ -342,13 +338,13 @@ export default function Login() {
                 w-1.5
                 h-1.5
                 rounded-full
-                bg-[#2f9e44]
+                bg-[#2f9e50]
               " />
 
               <span className="
                 text-[11px]
                 font-medium
-                text-[#555a68]
+                text-[#55685f]
               ">
                 Built for India's food ecosystem
               </span>
@@ -361,11 +357,11 @@ export default function Login() {
               leading-[1.08]
               tracking-[-0.04em]
               font-semibold
-              text-[#111936]
+              text-[#113625]
             ">
               Safer products.
               <br />
-              <span className="text-[#4338ca]">
+              <span className="text-[#38ca86]">
                 Smarter decisions.
               </span>
             </h2>
@@ -375,7 +371,7 @@ export default function Login() {
               mt-6
               text-[14px]
               leading-6
-              text-[#5f6473]
+              text-[#726a60]
               max-w-[400px]
             ">
               Verify products, identify compliance risks,
@@ -439,7 +435,7 @@ export default function Login() {
             <div className="
               w-10 h-10
               rounded-xl
-              bg-[#4338ca]
+              bg-[#38ca86]
               text-white
               flex items-center justify-center
             ">
@@ -450,11 +446,11 @@ export default function Login() {
 
             <div>
 
-              <p className="font-semibold text-[#15161b]">
+              <p className="font-semibold text-[#151b18]">
                 SpectraSafe
               </p>
 
-              <p className="text-[10px] text-[#9297a3]">
+              <p className="text-[10px] text-[#a59b90]">
                 Product Safety Intelligence
               </p>
 
@@ -472,7 +468,7 @@ export default function Login() {
               uppercase
               tracking-[0.14em]
               font-semibold
-              text-[#4338ca]
+              text-[#38ca86]
               mb-2
             ">
               Welcome back
@@ -483,7 +479,7 @@ export default function Login() {
               leading-tight
               font-semibold
               tracking-[-0.03em]
-              text-[#14161a]
+              text-[#141a17]
             ">
               Sign in to SpectraSafe
             </h2>
@@ -491,7 +487,7 @@ export default function Login() {
             <p className="
               mt-2
               text-sm
-              text-[#6b7280]
+              text-[#80766b]
             ">
               Continue to your safety and compliance workspace.
             </p>
@@ -511,7 +507,7 @@ export default function Login() {
                 block
                 text-xs
                 font-semibold
-                text-[#3f4350]
+                text-[#3f5048]
                 mb-2
               ">
                 Email address
@@ -544,7 +540,7 @@ export default function Login() {
                 <label className="
                   text-xs
                   font-semibold
-                  text-[#3f4350]
+                  text-[#3f5048]
                 ">
                   Password
                 </label>
@@ -571,13 +567,13 @@ export default function Login() {
                 mb-5
                 rounded-xl
                 border
-                border-[#f1caca]
-                bg-[#fff6f6]
+                border-[#f1ccca]
+                bg-[#fef7f7]
                 px-4
                 py-3
               ">
 
-                <p className="text-xs text-[#b91c1c]">
+                <p className="text-xs text-[#b9241c]">
                   {error}
                 </p>
 
@@ -594,14 +590,14 @@ export default function Login() {
                 w-full
                 h-12
                 rounded-xl
-                bg-[#4338ca]
+                bg-[#38ca86]
                 text-white
                 text-sm
                 font-semibold
-                shadow-[0_8px_20px_rgba(67,56,202,0.20)]
+                shadow-[0_8px_20px_rgba(31,109,71,0.20)]
                 transition-all
-                hover:bg-[#3730a3]
-                hover:shadow-[0_10px_24px_rgba(67,56,202,0.25)]
+                hover:bg-[#30a36d]
+                hover:shadow-[0_10px_24px_rgba(31,109,71,0.25)]
                 active:scale-[0.99]
                 disabled:opacity-60
                 disabled:cursor-not-allowed
@@ -621,13 +617,13 @@ export default function Login() {
             mt-7
             pt-6
             border-t
-            border-[#eef0f2]
+            border-[#eef2f0]
           ">
 
             <p className="
               text-xs
               text-center
-              text-[#737883]
+              text-[#867c70]
             ">
               Don't have a SpectraSafe account?{" "}
 
@@ -635,8 +631,8 @@ export default function Login() {
                 to="/register"
                 className="
                   font-semibold
-                  text-[#4338ca]
-                  hover:text-[#3126a6]
+                  text-[#38ca86]
+                  hover:text-[#27a56a]
                 "
               >
                 Create an account
@@ -655,14 +651,14 @@ export default function Login() {
             justify-center
             gap-2
             text-[10px]
-            text-[#9a9ea8]
+            text-[#aaa298]
           ">
 
             <span className="
               w-5 h-5
               rounded-full
-              bg-[#f1f5f1]
-              text-[#2f9e44]
+              bg-[#eff7f1]
+              text-[#2f9e50]
               flex items-center justify-center
             ">
               ✓
@@ -697,7 +693,7 @@ function TrustPoint({ title, description }) {
         border border-white
         shadow-sm
         flex items-center justify-center
-        text-[#4338ca]
+        text-[#38ca86]
         text-sm
       ">
         ✓
@@ -708,7 +704,7 @@ function TrustPoint({ title, description }) {
         <p className="
           text-sm
           font-semibold
-          text-[#252a43]
+          text-[#254335]
         ">
           {title}
         </p>
@@ -717,7 +713,7 @@ function TrustPoint({ title, description }) {
           mt-0.5
           text-[11px]
           leading-5
-          text-[#666b79]
+          text-[#7a7065]
         ">
           {description}
         </p>

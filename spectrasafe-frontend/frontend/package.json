@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@tabler/icons-react": "^3.46.0",
+    "konva": "^10.6.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-konva": "^19.3.0",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
